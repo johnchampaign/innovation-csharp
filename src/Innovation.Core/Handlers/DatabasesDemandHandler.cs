@@ -14,7 +14,7 @@ public sealed class DatabasesDemandHandler : IDogmaHandler
 
         if (ctx.PendingChoice is null)
         {
-            ctx.PendingChoice = new SelectHandCardSubsetRequest
+            ctx.PendingChoice = new SelectScoreCardSubsetRequest
             {
                 Prompt = $"Databases: return {toReturn} of your {n} score-pile cards.",
                 PlayerIndex = target.Index,
@@ -26,7 +26,7 @@ public sealed class DatabasesDemandHandler : IDogmaHandler
             return false;
         }
 
-        var req = (SelectHandCardSubsetRequest)ctx.PendingChoice;
+        var req = (SelectScoreCardSubsetRequest)ctx.PendingChoice;
         ctx.PendingChoice = null;
         foreach (var id in req.ChosenCardIds)
         {

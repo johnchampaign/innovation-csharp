@@ -8,7 +8,7 @@ public sealed class SelfServiceExecuteHandler : IDogmaHandler
 {
     public bool Execute(GameState g, PlayerState target, DogmaContext ctx)
     {
-        if (ctx.PendingChoice is SelectHandCardRequest prior)
+        if (ctx.PendingChoice is SelectScoreCardRequest prior)
         {
             ctx.PendingChoice = null;
             if (prior.ChosenCardId is int chosen)
@@ -25,7 +25,7 @@ public sealed class SelfServiceExecuteHandler : IDogmaHandler
         }
         if (eligible.Count == 0) return false;
 
-        ctx.PendingChoice = new SelectHandCardRequest
+        ctx.PendingChoice = new SelectScoreCardRequest
         {
             Prompt = "Self Service: choose another top card on your board to execute for yourself only.",
             PlayerIndex = target.Index,

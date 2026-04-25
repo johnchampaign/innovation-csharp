@@ -8,7 +8,7 @@ public sealed class BioengineeringTransferHandler : IDogmaHandler
 {
     public bool Execute(GameState g, PlayerState target, DogmaContext ctx)
     {
-        if (ctx.PendingChoice is SelectHandCardRequest prior)
+        if (ctx.PendingChoice is SelectScoreCardRequest prior)
         {
             ctx.PendingChoice = null;
             if (prior.ChosenCardId is int chosen)
@@ -47,7 +47,7 @@ public sealed class BioengineeringTransferHandler : IDogmaHandler
         }
         if (eligible.Count == 0) return false;
 
-        ctx.PendingChoice = new SelectHandCardRequest
+        ctx.PendingChoice = new SelectScoreCardRequest
         {
             Prompt = "Bioengineering: transfer a top [Leaf] card from another player's board to your score pile.",
             PlayerIndex = target.Index,

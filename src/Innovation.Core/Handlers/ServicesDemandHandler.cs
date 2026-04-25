@@ -11,7 +11,7 @@ public sealed class ServicesDemandHandler : IDogmaHandler
     {
         var activator = g.Players[ctx.ActivatingPlayerIndex];
 
-        if (ctx.PendingChoice is SelectHandCardRequest pick)
+        if (ctx.PendingChoice is SelectScoreCardRequest pick)
         {
             ctx.PendingChoice = null;
             if (pick.ChosenCardId is int chosen)
@@ -55,7 +55,7 @@ public sealed class ServicesDemandHandler : IDogmaHandler
         }
         if (eligible.Count == 0) return true;
 
-        ctx.PendingChoice = new SelectHandCardRequest
+        ctx.PendingChoice = new SelectScoreCardRequest
         {
             Prompt = "Services: choose a top card without a [Leaf] from the activator's board to take into your hand.",
             PlayerIndex = target.Index,

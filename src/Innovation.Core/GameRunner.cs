@@ -184,6 +184,9 @@ public sealed class GameRunner
             case SelectHandCardSubsetRequest ss:
                 ss.ChosenCardIds = controller.ChooseHandCardSubset(_g, self, ss);
                 break;
+            case SelectScoreCardSubsetRequest sss:
+                sss.ChosenCardIds = controller.ChooseScoreCardSubset(_g, self, sss);
+                break;
             case YesNoChoiceRequest yn:
                 yn.ChosenYes = controller.ChooseYesNo(_g, self, yn);
                 break;

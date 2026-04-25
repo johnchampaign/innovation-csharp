@@ -142,6 +142,20 @@ public sealed class GreedyController : IPlayerController
         return ordered.Take(take).ToList();
     }
 
+    public IReadOnlyList<int> ChooseScoreCardSubset(GameState g, PlayerState self, SelectScoreCardSubsetRequest req)
+    {
+        // Score-pile subset prompts (Combustion, Databases) give cards away;
+        // surrender the LOWEST-age cards to minimise damage.
+        int maxTakeable = Math.Min(req.MaxCount, req.EligibleCardIds.Count);
+        int minTakeable = Math.Min(req.MinCount, maxTakeable);
+        if (maxTakeable == 0) return Array.Empty<int>();
+        var ordered = req.EligibleCardIds.OrderBy(id => g.Cards[id].Age).ToList();
+        int take = Math.Max(minTakeable, maxTakeable == 0 ? 0 : minTakeable);
+        // Default to MinCount when the prompt allows declining beyond it
+        // (Databases, Combustion both fix Min=Max anyway).
+        return ordered.Take(Math.Max(minTakeable, take)).ToList();
+    }
+
     public bool ChooseYesNo(GameState g, PlayerState self, YesNoChoiceRequest req) => true;
 
     public CardColor? ChooseColor(GameState g, PlayerState self, SelectColorRequest req)

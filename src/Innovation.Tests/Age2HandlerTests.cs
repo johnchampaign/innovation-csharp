@@ -524,14 +524,20 @@ public class Age2HandlerTests
         bool progressed = h.Execute(g, target, ctx);
         Assert.True(progressed);
         Assert.True(ctx.DemandSuccessful);
-        // Target's Yellow pile is empty now; activator's score pile got the card.
-        Assert.True(target.Stack(CardColor.Yellow).IsEmpty);
+        // The melded Yellow card was transferred to activator's score
+        // pile. (We don't check target's Yellow stack — the test deck
+        // contains every age-1 card, so target's draw-and-tuck below can
+        // pull the same Yellow back and re-tuck it; that's a test-data
+        // quirk, not a handler bug.)
         Assert.Contains(yellow, activator.ScorePile);
-        // Activator drew-and-tucked a 1 under some color pile.
+        // "If you do, draw and tuck a 1!" — the demand target (the
+        // defender) is the one who draws and tucks per RAW. So we expect
+        // a new age-1 card under one of the target's stacks, not the
+        // activator's.
         int tuckedCount = 0;
         foreach (CardColor c in Enum.GetValues<CardColor>())
         {
-            var stack = activator.Stack(c);
+            var stack = target.Stack(c);
             if (!stack.IsEmpty && g.Cards[stack.Cards[^1]].Age == 1) tuckedCount++;
         }
         Assert.True(tuckedCount >= 1);

@@ -11,8 +11,11 @@ public sealed class SpecializationSplayHandler : IDogmaHandler
         if (ctx.PendingChoice is null)
         {
             var eligible = new List<CardColor>();
-            if (target.Stack(CardColor.Yellow).Count >= 2) eligible.Add(CardColor.Yellow);
-            if (target.Stack(CardColor.Blue).Count >= 2) eligible.Add(CardColor.Blue);
+            // Skip a color that's already splayed up.
+            var ys = target.Stack(CardColor.Yellow);
+            if (ys.Count >= 2 && ys.Splay != Splay.Up) eligible.Add(CardColor.Yellow);
+            var bs = target.Stack(CardColor.Blue);
+            if (bs.Count >= 2 && bs.Splay != Splay.Up) eligible.Add(CardColor.Blue);
             if (eligible.Count == 0) return false;
             ctx.PendingChoice = new SelectColorRequest
             {

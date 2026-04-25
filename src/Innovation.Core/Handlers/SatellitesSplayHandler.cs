@@ -8,7 +8,8 @@ public sealed class SatellitesSplayHandler : IDogmaHandler
 {
     public bool Execute(GameState g, PlayerState target, DogmaContext ctx)
     {
-        if (target.Stack(CardColor.Purple).Count < 2) return false;
+        var s = target.Stack(CardColor.Purple);
+        if (s.Count < 2 || s.Splay == Splay.Up) return false;
 
         if (ctx.PendingChoice is null)
         {

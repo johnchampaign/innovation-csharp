@@ -61,6 +61,13 @@ public interface IPlayerController
     int? ChooseScoreCard(GameState g, PlayerState self, SelectScoreCardRequest req);
 
     /// <summary>
+    /// Answer a pending "choose N cards from a score pile" prompt. Returned
+    /// count must be within <c>[MinCount, MaxCount]</c> and every id must
+    /// appear in <see cref="SelectScoreCardSubsetRequest.EligibleCardIds"/>.
+    /// </summary>
+    IReadOnlyList<int> ChooseScoreCardSubset(GameState g, PlayerState self, SelectScoreCardSubsetRequest req);
+
+    /// <summary>
     /// Answer a pending "rearrange pile order" prompt. The returned list
     /// must be a permutation of <see cref="SelectStackOrderRequest.CurrentOrder"/>.
     /// Returning the same order is a valid no-op pick.

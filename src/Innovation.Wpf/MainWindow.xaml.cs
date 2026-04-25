@@ -177,15 +177,47 @@ public partial class MainWindow : Window, IUserPromptSink
     private void OnEngineLogLine(string line)
     {
         if (!ShouldMirrorLine(line)) return;
+        var redacted = RedactOpponentHandCards(line);
         try
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                _log.Add("  · " + line);
+                _log.Add("  · " + redacted);
                 LogScroller.ScrollToEnd();
             }));
         }
         catch { /* window closing */ }
+    }
+
+    // Card-label format produced by GameLog.C: "A5 Title(Color)". Strip
+    // the title+color portion, keeping just the age, when the line
+    // describes an opponent's hand event (a draw, return, or transfer
+    // into/out of an opponent's hand). The file log keeps full info so
+    // the player can review post-game; only the in-window mirror redacts.
+    private static readonly System.Text.RegularExpressions.Regex CardLabelRx =
+        new(@"A(\d+)\s+[^(]+\(\w+\)",
+            System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private static string RedactOpponentHandCards(string line)
+    {
+        // Opponent (non-P1) drawing or returning, or score→hand. Lines
+        // start with the player tag.
+        if (System.Text.RegularExpressions.Regex.IsMatch(line,
+                @"^P[2-9]\b.*\b(draws|returns|moves)\b"))
+        {
+            return CardLabelRx.Replace(line, "A$1");
+        }
+
+        // hand→hand transfer where the destination is an opponent.
+        if (line.StartsWith("transfer hand→hand "))
+        {
+            // Pattern: "... → P{n}". Redact when n != 1.
+            var m = System.Text.RegularExpressions.Regex.Match(line, @"→\s*P(\d+)\b");
+            if (m.Success && m.Groups[1].Value != "1")
+                return CardLabelRx.Replace(line, "A$1");
+        }
+
+        return line;
     }
 
     private static bool ShouldMirrorLine(string line)
@@ -317,6 +349,10 @@ public partial class MainWindow : Window, IUserPromptSink
             ? "no cards"
             : $"{ss.ChosenCardIds.Count} card(s): " +
               string.Join(", ", ss.ChosenCardIds.Select(id => _cards[id].Title)),
+        SelectScoreCardSubsetRequest sss => sss.ChosenCardIds.Count == 0
+            ? "no cards"
+            : $"{sss.ChosenCardIds.Count} score card(s): " +
+              string.Join(", ", sss.ChosenCardIds.Select(id => _cards[id].Title)),
         SelectScoreCardRequest scs => scs.ChosenCardId is int id
             ? $"score card {_cards[id].Title}"
             : "none",
@@ -766,13 +802,43 @@ public partial class MainWindow : Window, IUserPromptSink
             var scoreTile = new CardSummaryView
             {
                 Card = Cards[id],
-                Margin = new Thickness(0, 0, 0, 2),
                 Width = 220,
                 HorizontalAlignment = HorizontalAlignment.Left,
+                Cursor = _scoreSubsetEligibleIds is not null
+                    ? System.Windows.Input.Cursors.Hand
+                    : System.Windows.Input.Cursors.Arrow,
             };
             int capturedId = id;
             scoreTile.MouseEnter += (_, _) => PreviewCard(_cards[capturedId]);
-            YourScorePanel.Children.Add(scoreTile);
+            scoreTile.MouseLeftButtonUp += (_, _) => OnScoreCardClicked(capturedId);
+
+            // Same gold-border pick highlight as hand-card subset prompts.
+            var frame = new Border
+            {
+                Child = scoreTile,
+                Margin = new Thickness(0, 0, 0, 2),
+                Padding = new Thickness(2),
+                BorderThickness = new Thickness(3),
+                BorderBrush = _subsetPicks.Contains(id)
+                    ? new SolidColorBrush(Color.FromRgb(0xE6, 0xB8, 0x1C))   // gold = picked
+                    : Brushes.Transparent,
+                HorizontalAlignment = HorizontalAlignment.Left,
+            };
+            YourScorePanel.Children.Add(frame);
+        }
+    }
+
+    private void OnScoreCardClicked(int cardId)
+    {
+        _detailCard = _cards[cardId];
+        DetailCard.Card = _detailCard;
+        ViewCardCombo.SelectedItem = _detailCard.Title;
+
+        if (_scoreSubsetEligibleIds is { } subs && subs.Contains(cardId))
+        {
+            if (!_subsetPicks.Add(cardId)) _subsetPicks.Remove(cardId);
+            PopulateYourScore();
+            UpdateSubsetOkState();
         }
     }
 
@@ -945,6 +1011,10 @@ public partial class MainWindow : Window, IUserPromptSink
     // membership in _subsetPicks, and OK resolves when the count is in
     // [min, max].
     private HashSet<int>? _subsetEligibleIds;
+    // Score-pile variant of the same subset prompt (Combustion, Databases).
+    // Only one of _subsetEligibleIds / _scoreSubsetEligibleIds is non-null
+    // at a time; clicks in the corresponding panel toggle into _subsetPicks.
+    private HashSet<int>? _scoreSubsetEligibleIds;
     private readonly HashSet<int> _subsetPicks = new();
     private int _subsetMin, _subsetMax;
 
@@ -1087,11 +1157,13 @@ public partial class MainWindow : Window, IUserPromptSink
         _legalDogmaColors = null;
         _legalHandPickIds = null;
         _subsetEligibleIds = null;
+        _scoreSubsetEligibleIds = null;
         _subsetPicks.Clear();
-        // Re-render hand + board once the prompt goes away so any
-        // lingering selection/tint borders are cleared.
+        // Re-render hand + board + score once the prompt goes away so
+        // any lingering selection/tint borders are cleared.
         PopulateYourHand();
         PopulateYourBoard();
+        PopulateYourScore();
     }
 
     private T RunPromptBlocking<T>(Action<TaskCompletionSource<T>> setup)
@@ -1186,6 +1258,24 @@ public partial class MainWindow : Window, IUserPromptSink
             // Rerender so eligible tiles start with a fresh (unselected)
             // frame; UpdateSubsetOkState gates the OK button.
             PopulateYourHand();
+            UpdateSubsetOkState();
+        });
+    }
+
+    public IReadOnlyList<int> PromptScoreCardSubset(GameState g, PlayerState self, SelectScoreCardSubsetRequest req)
+    {
+        return RunPromptBlocking<IReadOnlyList<int>>(tcs =>
+        {
+            _subsetTcs = tcs;
+            _scoreSubsetEligibleIds = req.EligibleCardIds.ToHashSet();
+            _subsetPicks.Clear();
+            _subsetMin = req.MinCount;
+            _subsetMax = req.MaxCount;
+            PromptText.Text = $"{req.Prompt} (pick {req.MinCount}–{req.MaxCount})";
+            SubsetPanel.Visibility = Visibility.Visible;
+            // Rerender score pile so eligible tiles get the click cursor +
+            // fresh (unselected) frame.
+            PopulateYourScore();
             UpdateSubsetOkState();
         });
     }
@@ -1354,11 +1444,22 @@ public partial class MainWindow : Window, IUserPromptSink
 
     public IReadOnlyList<int> PromptStackOrder(GameState g, PlayerState self, SelectStackOrderRequest req)
     {
-        // TODO: drag-and-drop reorder UI. For now, keep order unchanged so
-        // the handler advances without hanging. Publications is rarely
-        // impactful enough to block shipping; the AI also no-ops this.
-        GameLog.Log($"{GameLog.P(self)} keeps {req.Color} stack order unchanged (Publications reorder UI pending)");
-        return req.CurrentOrder.ToList();
+        // Modal Up/Down reorder dialog. Cancel keeps the original order.
+        IReadOnlyList<int>? chosen = null;
+        Dispatcher.Invoke(() =>
+        {
+            var topFirst = req.CurrentOrder.Select(id => _cards[id]).ToList();
+            var dlg = new StackReorderDialog(
+                $"Publications: reorder your {req.Color} pile",
+                topFirst,
+                self.Stack(req.Color).Splay)
+            {
+                Owner = this,
+            };
+            dlg.ShowDialog();
+            chosen = dlg.Result;
+        });
+        return chosen ?? req.CurrentOrder.ToList();
     }
 
     public int? PromptValue(GameState g, PlayerState self, SelectValueRequest req)

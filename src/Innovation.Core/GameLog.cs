@@ -24,6 +24,10 @@ public static class GameLog
     public static string DefaultPath =>
         Path.Combine(Path.GetTempPath(), "innovation-last-game.log");
 
+    /// <summary>Path for the previous game's log (kept across one new-game).</summary>
+    public static string PreviousPath =>
+        Path.Combine(Path.GetTempPath(), "innovation-previous-game.log");
+
     public static void Start(string? path = null)
     {
         Stop();
@@ -32,6 +36,20 @@ public static class GameLog
             path ??= DefaultPath;
             var dir = Path.GetDirectoryName(path);
             if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+
+            // Rotate: rename existing "last game" to "previous game" so the
+            // last two games' logs are both available. Only applies when
+            // we're opening the default path; custom paths get truncated.
+            if (path == DefaultPath && File.Exists(path))
+            {
+                try
+                {
+                    if (File.Exists(PreviousPath)) File.Delete(PreviousPath);
+                    File.Move(path, PreviousPath);
+                }
+                catch { /* best-effort; if rotation fails, just truncate. */ }
+            }
+
             _w = new StreamWriter(path, append: false) { AutoFlush = true };
             CurrentPath = path;
             _depth = 0;

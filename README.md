@@ -1,7 +1,7 @@
 # Innovation
 
 A C# / WPF implementation of Carl Chudyk's *Innovation* (2010), ported from
-the 2013 Visual Basic 6 reference implementation by Justin Atill.
+the 2013 Visual Basic 6 reference implementation by Jeff Till.
 
 Single-player against AI opponents (greedy or random); 2 to 4 seats with any
 mix of human and AI. Faithful to the base-game rules; no expansions.
@@ -61,8 +61,6 @@ hard-won from porting the rules.
 
 - No expansions (*Echoes*, *Figures in the Sand*, *Cities*, *Artifacts*).
 - Online multiplayer is on the roadmap but not yet implemented.
-- The Publications stack-reorder dialog is a no-op placeholder; the AI also
-  no-ops it. Rare card; rarely matters.
 
 ## Contributing
 
@@ -81,7 +79,7 @@ the original 2013 implementation (`main.frm`) in your comments is appreciated
 
 - **Carl Chudyk** — designer of *Innovation*.
 - **Asmadi Games** — publisher.
-- **Justin Atill** — author of the 2013 VB6 implementation that this project
+- **Jeff Till** — author of the 2013 VB6 implementation that this project
   ports from.
 
 ## License

@@ -29,6 +29,9 @@ public interface IUserPromptSink
 
     int? PromptScoreCard(GameState g, PlayerState self, SelectScoreCardRequest req);
 
+    IReadOnlyList<int> PromptScoreCardSubset(
+        GameState g, PlayerState self, SelectScoreCardSubsetRequest req);
+
     IReadOnlyList<int> PromptStackOrder(GameState g, PlayerState self, SelectStackOrderRequest req);
 
     int? PromptValue(GameState g, PlayerState self, SelectValueRequest req);

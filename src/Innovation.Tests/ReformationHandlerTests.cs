@@ -107,6 +107,7 @@ public class ReformationHandlerTests
         public bool ChooseYesNo(GameState g, PlayerState self, YesNoChoiceRequest req) => false;
         public CardColor? ChooseColor(GameState g, PlayerState self, SelectColorRequest req) => ColorAnswers.Dequeue();
         public int? ChooseScoreCard(GameState g, PlayerState self, SelectScoreCardRequest req) => null;
+        public IReadOnlyList<int> ChooseScoreCardSubset(GameState g, PlayerState self, SelectScoreCardSubsetRequest req) => Array.Empty<int>();
         public IReadOnlyList<int> ChooseStackOrder(GameState g, PlayerState self, SelectStackOrderRequest req) => req.CurrentOrder.ToList();
         public int? ChooseValue(GameState g, PlayerState self, SelectValueRequest req) => null;
     }

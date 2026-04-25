@@ -13,7 +13,7 @@ public sealed class CombustionDemandHandler : IDogmaHandler
         {
             if (target.ScorePile.Count == 0) return false;
             int n = Math.Min(2, target.ScorePile.Count);
-            ctx.PendingChoice = new SelectHandCardSubsetRequest
+            ctx.PendingChoice = new SelectScoreCardSubsetRequest
             {
                 Prompt = $"Combustion: transfer {n} card(s) from your score pile to "
                        + $"player {ctx.ActivatingPlayerIndex + 1}'s score pile.",
@@ -26,7 +26,7 @@ public sealed class CombustionDemandHandler : IDogmaHandler
             return false;
         }
 
-        var req = (SelectHandCardSubsetRequest)ctx.PendingChoice;
+        var req = (SelectScoreCardSubsetRequest)ctx.PendingChoice;
         ctx.PendingChoice = null;
 
         var activator = g.Players[ctx.ActivatingPlayerIndex];

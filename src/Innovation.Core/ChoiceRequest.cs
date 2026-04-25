@@ -65,6 +65,22 @@ public sealed class SelectScoreCardRequest : ChoiceRequest
     public int? ChosenCardId { get; set; }
 }
 
+/// <summary>
+/// "Choose a subset of cards from a score pile (between Min and Max)."
+/// Used by Combustion and Databases — score pile is open information so
+/// the source (self vs opponent) is encoded in the eligible-id list, like
+/// <see cref="SelectScoreCardRequest"/>.
+/// </summary>
+public sealed class SelectScoreCardSubsetRequest : ChoiceRequest
+{
+    public IReadOnlyList<int> EligibleCardIds { get; init; } = Array.Empty<int>();
+    public int MinCount { get; init; }
+    public int MaxCount { get; init; }
+
+    /// <summary>Caller writes this before resuming.</summary>
+    public IReadOnlyList<int> ChosenCardIds { get; set; } = Array.Empty<int>();
+}
+
 /// <summary>Simple yes/no confirmation — e.g. Code of Laws's splay-or-not.</summary>
 public sealed class YesNoChoiceRequest : ChoiceRequest
 {

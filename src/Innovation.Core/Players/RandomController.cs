@@ -51,6 +51,22 @@ public sealed class RandomController : IPlayerController
         return result;
     }
 
+    public IReadOnlyList<int> ChooseScoreCardSubset(GameState g, PlayerState self, SelectScoreCardSubsetRequest req)
+    {
+        int maxTakeable = Math.Min(req.MaxCount, req.EligibleCardIds.Count);
+        int minTakeable = Math.Min(req.MinCount, maxTakeable);
+        int size = minTakeable + _rng.Next(maxTakeable - minTakeable + 1);
+        var pool = req.EligibleCardIds.ToList();
+        var result = new List<int>(size);
+        for (int i = 0; i < size; i++)
+        {
+            int k = _rng.Next(pool.Count);
+            result.Add(pool[k]);
+            pool.RemoveAt(k);
+        }
+        return result;
+    }
+
     public bool ChooseYesNo(GameState g, PlayerState self, YesNoChoiceRequest req)
         => _rng.Next(2) == 0;
 

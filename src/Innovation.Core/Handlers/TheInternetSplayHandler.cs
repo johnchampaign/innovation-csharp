@@ -8,7 +8,8 @@ public sealed class TheInternetSplayHandler : IDogmaHandler
 {
     public bool Execute(GameState g, PlayerState target, DogmaContext ctx)
     {
-        if (target.Stack(CardColor.Green).Count < 2) return false;
+        var s = target.Stack(CardColor.Green);
+        if (s.Count < 2 || s.Splay == Splay.Up) return false;
 
         if (ctx.PendingChoice is null)
         {

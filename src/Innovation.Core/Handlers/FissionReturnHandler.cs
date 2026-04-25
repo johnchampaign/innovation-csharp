@@ -18,7 +18,7 @@ public sealed class FissionReturnHandler : IDogmaHandler
             return false;
         }
 
-        if (ctx.PendingChoice is SelectHandCardRequest prior)
+        if (ctx.PendingChoice is SelectScoreCardRequest prior)
         {
             ctx.PendingChoice = null;
             if (prior.ChosenCardId is int chosen)
@@ -55,7 +55,7 @@ public sealed class FissionReturnHandler : IDogmaHandler
         }
         if (eligible.Count == 0) return false;
 
-        ctx.PendingChoice = new SelectHandCardRequest
+        ctx.PendingChoice = new SelectScoreCardRequest
         {
             Prompt = "Fission: choose a top card (not Fission) from any player's board to return.",
             PlayerIndex = target.Index,

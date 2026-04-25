@@ -8,7 +8,7 @@ public sealed class GlobalizationDemandHandler : IDogmaHandler
 {
     public bool Execute(GameState g, PlayerState target, DogmaContext ctx)
     {
-        if (ctx.PendingChoice is SelectHandCardRequest prior)
+        if (ctx.PendingChoice is SelectScoreCardRequest prior)
         {
             ctx.PendingChoice = null;
             if (prior.ChosenCardId is int chosen)
@@ -40,7 +40,7 @@ public sealed class GlobalizationDemandHandler : IDogmaHandler
         }
         if (eligible.Count == 0) return false;
 
-        ctx.PendingChoice = new SelectHandCardRequest
+        ctx.PendingChoice = new SelectScoreCardRequest
         {
             Prompt = "Globalization: return a top [Leaf] card from your board.",
             PlayerIndex = target.Index,
