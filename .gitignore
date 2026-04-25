@@ -1,0 +1,65 @@
+# --- .NET build output ---
+bin/
+obj/
+out/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+*.dll
+*.exe
+*.pdb
+*.cache
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# --- Visual Studio / Rider / VS Code ---
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- NuGet ---
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# --- Test / coverage output ---
+[Tt]est[Rr]esult*/
+*.coverage
+*.coveragexml
+coverlet.json
+TestResults/
+
+# --- Claude Code local config / scratch ---
+.claude/
+.commit-msg.tmp
+
+# --- OS junk ---
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# --- Logs ---
+*.log
+innovation-last-game.log
+
+# --- Project-specific: original VB6 reference + rulebook/cards
+#     (kept locally for development; not redistributed) ---
+extracted/
+innovation20130204.zip
+Innovation_Rules.pdf
+innovation cards.pdf
+Icons/
+images/
+innovation game snapshot.png

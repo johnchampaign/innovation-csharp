@@ -1,0 +1,496 @@
+<Window x:Class="Innovation.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Innovation.Wpf"
+        mc:Ignorable="d"
+        Title="Innovation AI"
+        Width="1480" Height="840"
+        WindowStartupLocation="CenterScreen"
+        Background="#F3EFD3">
+    <!--
+        Phase 7.3 shell — matches the VB6 reference screenshot.
+
+        Nine regions, three conceptual rows:
+
+          Top strip (~215px tall, three columns):
+            TL  Detail card   (CardView)   — currently shown card
+            TM  Current player banner + Continue button
+            TR  Game log (scrolling text list)
+
+          Middle/bottom band:
+            Left sidebar (~260px wide):
+              View Card: ComboBox + icon-totals grid (Leaf / Castle /
+                Lightbulb / Crown / Factory / Clock / A / S) for each
+                player, with the active player's best icon green and
+                their worst icon red.
+              Achievements Remaining — ages 1–9 on one row, then the
+                five specials.
+              Cards Remaining — deck counts 1)–10) in two rows of five.
+
+            Main area (* wide):
+              Your Board     — 5 color-slot row of CardTileView tiles,
+                                each with Size / Splay / View Stack.
+              Your Hand      — stacked CardSummaryView strips, left
+                                half of the mid-row.
+              Your Score     — stacked CardSummaryView strips + "View
+                                Entire Pile as List" button, right half.
+              Opponent Board — one row per opponent, each a row of
+                                CardSummaryView strips with Size beneath
+                                plus Hand / Score Pile counts at right.
+
+        Every populated panel below has an x:Name; the code-behind
+        (MainWindow.xaml.cs) fills them from a scripted scene so we
+        can verify the layout without a live GameRunner.
+    -->
+    <Grid Margin="6">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ================= TOP STRIP ================= -->
+        <Grid Grid.Row="0" Height="280">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="380"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Upper-left: the "mouse-over / currently selected"
+                 detail card. Fixed at its UserControl's natural 340x200
+                 so header/body/footer stay in proportion. -->
+            <local:CardView x:Name="DetailCard"
+                            Grid.Column="0"
+                            VerticalAlignment="Top"
+                            HorizontalAlignment="Left"
+                            Margin="2,2,0,0"/>
+
+            <!-- Upper-middle: current player banner + Continue button. -->
+            <Grid Grid.Column="1" Margin="30,8,30,8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock x:Name="CurrentPlayerText"
+                           Grid.Row="0"
+                           FontFamily="Segoe UI"
+                           FontWeight="Bold"
+                           FontSize="14"
+                           Foreground="#1F2937"/>
+                <TextBlock x:Name="PromptText"
+                           Grid.Row="1"
+                           FontFamily="Segoe UI"
+                           FontSize="13"
+                           Foreground="#1F2937"
+                           Margin="0,4,0,0"
+                           TextWrapping="Wrap"/>
+                <!-- Inline prompt host. One sub-panel visible at a time,
+                     driven by IUserPromptSink implementations in code-behind.
+                     Only seat 0 (the human) ever sees these — AI seats
+                     answer their prompts in-controller and never set a
+                     pending choice on the UI. -->
+                <StackPanel x:Name="PromptHost"
+                            Grid.Row="2"
+                            Margin="0,8,0,0">
+                    <!-- Top-level action prompt. Only Draw is a button;
+                         Meld = click a hand card, Achieve = click an
+                         age in "Achievements Remaining", Dogma = click
+                         a top card on Your Board. -->
+                    <StackPanel x:Name="ActionPanel" Visibility="Collapsed">
+                        <TextBlock x:Name="ActionHintText"
+                                   FontFamily="Segoe UI" FontSize="12" FontStyle="Italic"
+                                   Foreground="#555" Margin="0,0,0,4"
+                                   TextWrapping="Wrap"/>
+                        <Button x:Name="DrawButton" Content="Draw" Width="80"
+                                HorizontalAlignment="Left" Padding="6,2"
+                                FontFamily="Segoe UI" FontSize="12"/>
+                    </StackPanel>
+                    <!-- Single-card hand prompt: click a card in Your Hand
+                         to pick. The None button only shows for optional
+                         prompts (AllowNone == true). -->
+                    <StackPanel x:Name="HandCardPanel" Visibility="Collapsed">
+                        <TextBlock Text="Click a card in Your Hand."
+                                   FontFamily="Segoe UI" FontSize="12" FontStyle="Italic"
+                                   Foreground="#555" Margin="0,0,0,4"/>
+                        <Button x:Name="HandCardNoneButton" Content="None" Width="80"
+                                HorizontalAlignment="Left" Padding="6,2"
+                                FontFamily="Segoe UI" FontSize="12"/>
+                    </StackPanel>
+                    <!-- Multi-card hand prompt: click cards in Your Hand
+                         to toggle selection. A selected card gets a gold
+                         border; OK is enabled only when the pick count
+                         falls inside [MinCount, MaxCount]. -->
+                    <StackPanel x:Name="SubsetPanel" Visibility="Collapsed">
+                        <TextBlock Text="Click cards in Your Hand to toggle selection."
+                                   FontFamily="Segoe UI" FontSize="12" FontStyle="Italic"
+                                   Foreground="#555" Margin="0,0,0,4"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Button x:Name="SubsetOkButton" Content="OK" Width="80" Margin="0,0,10,0" Padding="6,2" FontFamily="Segoe UI" FontSize="12"/>
+                            <TextBlock x:Name="SubsetCountText"
+                                       FontFamily="Segoe UI" FontSize="12"
+                                       Foreground="#1F2937"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel x:Name="YesNoPanel" Orientation="Horizontal" Visibility="Collapsed" Margin="0,2,0,2">
+                        <Button x:Name="YesButton" Content="Yes" Width="80" Margin="0,0,6,0" Padding="6,2" FontFamily="Segoe UI" FontSize="12"/>
+                        <Button x:Name="NoButton" Content="No" Width="80" Padding="6,2" FontFamily="Segoe UI" FontSize="12"/>
+                    </StackPanel>
+                    <WrapPanel x:Name="ColorPanel" Orientation="Horizontal" Visibility="Collapsed" Margin="0,2,0,2"/>
+                    <WrapPanel x:Name="ScoreCardPanel" Orientation="Horizontal" Visibility="Collapsed" Margin="0,2,0,2"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button x:Name="ContinueButton"
+                            Content="Continue >"
+                            Padding="14,4"
+                            MinWidth="96"
+                            FontFamily="Segoe UI"
+                            FontSize="12"/>
+                    <Button x:Name="NewGameButton"
+                            Content="New Game"
+                            Padding="14,4"
+                            MinWidth="96"
+                            Margin="8,0,0,0"
+                            Visibility="Collapsed"
+                            FontFamily="Segoe UI"
+                            FontSize="12"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Upper-right: game log. -->
+            <Border Grid.Column="2"
+                    BorderBrush="#888"
+                    BorderThickness="1"
+                    Background="White"
+                    SnapsToDevicePixels="True">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                <ScrollViewer Grid.Row="0" x:Name="LogScroller"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Padding="6,4">
+                    <ItemsControl x:Name="LogItems">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}"
+                                           FontFamily="Segoe UI"
+                                           FontSize="12"
+                                           Foreground="#1F2937"
+                                           TextWrapping="NoWrap"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="4">
+                    <Button x:Name="CopyStateButton"
+                            Content="Copy state" Margin="0,0,4,0" Padding="6,2"
+                            FontFamily="Segoe UI" FontSize="11"
+                            Click="CopyStateButton_Click"/>
+                    <Button x:Name="LoadStateButton"
+                            Content="Load state…" Margin="0,0,4,0" Padding="6,2"
+                            FontFamily="Segoe UI" FontSize="11"
+                            Click="LoadStateButton_Click"/>
+                    <Button x:Name="OpenLogButton"
+                            Content="Open log file" Padding="6,2"
+                            FontFamily="Segoe UI" FontSize="11"
+                            Click="OpenLogButton_Click"/>
+                </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ================= MAIN ================= -->
+        <Grid Grid.Row="1" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ========== LEFT SIDEBAR ========== -->
+            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+
+                <!-- View Card + icon totals -->
+                <StackPanel Margin="0,0,0,8">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <TextBlock Text="View Card: "
+                                   FontFamily="Segoe UI"
+                                   FontSize="12"
+                                   Foreground="#1F2937"
+                                   VerticalAlignment="Center"/>
+                        <ComboBox x:Name="ViewCardCombo"
+                                  Width="180"
+                                  FontFamily="Segoe UI"
+                                  FontSize="12"/>
+                    </StackPanel>
+
+                    <!-- Populated by code-behind: one header row of
+                         icon imagery (Leaf/Castle/Lightbulb/Crown/
+                         Factory/Clock) + "A" + "S", then one row per
+                         player of counts. Winner-icon green, loser-
+                         icon red (and the A/S totals plain dark). -->
+                    <Grid x:Name="IconTotalsGrid"
+                          Margin="0,2,0,0"/>
+                </StackPanel>
+
+                <!-- Achievements Remaining -->
+                <StackPanel Margin="0,8,0,8">
+                    <TextBlock Text="Achievements Remaining"
+                               FontFamily="Segoe UI"
+                               FontWeight="Bold"
+                               FontSize="14"
+                               Foreground="#1F2937"/>
+                    <!-- Rebuilt in code-behind so each age tile can carry
+                         its own click handler for Achieve. -->
+                    <StackPanel x:Name="AgeAchievementsList"
+                                Orientation="Horizontal"
+                                Margin="0,4,0,0"/>
+
+                    <!-- Two columns of special-achievement labels —
+                         shown bold if still available, grey if
+                         claimed. Populated by code-behind. -->
+                    <Grid x:Name="SpecialAchievementsGrid"
+                          Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock x:Name="SaMonument"
+                                   Grid.Row="0" Grid.Column="0"
+                                   Text="Monument"
+                                   FontFamily="Segoe UI"
+                                   FontSize="15"
+                                   FontWeight="Bold"
+                                   Foreground="#1F2937"/>
+                        <TextBlock x:Name="SaEmpire"
+                                   Grid.Row="0" Grid.Column="1"
+                                   Text="Empire"
+                                   FontFamily="Segoe UI"
+                                   FontSize="15"
+                                   FontWeight="Bold"
+                                   Foreground="#1F2937"/>
+                        <TextBlock x:Name="SaWonder"
+                                   Grid.Row="1" Grid.Column="0"
+                                   Text="Wonder"
+                                   FontFamily="Segoe UI"
+                                   FontSize="15"
+                                   FontWeight="Bold"
+                                   Foreground="#1F2937"/>
+                        <TextBlock x:Name="SaWorld"
+                                   Grid.Row="1" Grid.Column="1"
+                                   Text="World"
+                                   FontFamily="Segoe UI"
+                                   FontSize="15"
+                                   FontWeight="Bold"
+                                   Foreground="#1F2937"/>
+                        <TextBlock x:Name="SaUniverse"
+                                   Grid.Row="2" Grid.Column="0"
+                                   Text="Universe"
+                                   FontFamily="Segoe UI"
+                                   FontSize="15"
+                                   FontWeight="Bold"
+                                   Foreground="#1F2937"/>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Cards Remaining -->
+                <StackPanel Margin="0,8,0,0">
+                    <TextBlock Text="Cards Remaining"
+                               FontFamily="Segoe UI"
+                               FontWeight="Bold"
+                               FontSize="14"
+                               Foreground="#1F2937"/>
+                    <!-- 2 rows of 5 "n) NN" labels. Populated by code-behind. -->
+                    <Grid x:Name="CardsRemainingGrid"
+                          Margin="0,4,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ========== MAIN AREA ========== -->
+            <!-- Row layout rationale:
+                 Row 0 (Your Board): Auto — natural size, five pile tiles.
+                 Row 1 (Hand/Score): * — fills all remaining space; each
+                   side is a Grid with a header (Auto) + ScrollViewer (*)
+                   so growing hand/score content scrolls in place rather
+                   than pushing the opponent row off-screen.
+                 Row 2 (Opponent):  Auto — always shows at natural height
+                   at the bottom of the main area. -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Your Board -->
+                <StackPanel Grid.Row="0">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                        <TextBlock Text="Your Board"
+                                   FontFamily="Segoe UI"
+                                   FontWeight="Bold"
+                                   FontSize="14"
+                                   Foreground="#1F2937"
+                                   Width="150"/>
+                        <TextBlock Text="Highest top"
+                                   FontFamily="Segoe UI"
+                                   FontWeight="Bold"
+                                   FontSize="13"
+                                   Foreground="#1F2937"
+                                   Margin="30,0,12,0"/>
+                        <TextBlock x:Name="HighestTopText"
+                                   FontFamily="Segoe UI"
+                                   FontWeight="Bold"
+                                   FontSize="13"
+                                   Foreground="#1F2937"/>
+                    </StackPanel>
+                    <Grid x:Name="YourBoardGrid"
+                          Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- Five pile cells filled by code-behind, in
+                             the fixed display order Yellow / Red /
+                             Purple / Blue / Green. Empty colors just
+                             leave their cell blank (user request). -->
+                    </Grid>
+                </StackPanel>
+
+                <!-- Your Hand + Score Pile (side by side). Each side is a
+                     2-row Grid (header Auto, ScrollViewer *) so the
+                     scroll area fills whatever vertical space the parent
+                     row gives it. -->
+                <Grid Grid.Row="1" Margin="0,4,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0" Margin="0,0,10,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Text="Your Hand"
+                                   FontFamily="Segoe UI"
+                                   FontWeight="Bold"
+                                   FontSize="14"
+                                   Foreground="#1F2937"/>
+                        <ScrollViewer Grid.Row="1"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel x:Name="YourHandPanel"
+                                        Margin="0,4,0,0"/>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <Grid Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Orientation="Horizontal">
+                            <TextBlock x:Name="YourScoreHeader"
+                                       FontFamily="Segoe UI"
+                                       FontWeight="Bold"
+                                       FontSize="14"
+                                       Foreground="#1F2937"
+                                       VerticalAlignment="Center"/>
+                            <Button x:Name="ViewScorePileButton"
+                                    Content="View Entire Pile as List"
+                                    Margin="12,0,0,0"
+                                    Padding="8,2"
+                                    FontFamily="Segoe UI"
+                                    FontSize="11"/>
+                        </StackPanel>
+                        <ScrollViewer Grid.Row="1"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel x:Name="YourScorePanel"
+                                        Margin="0,4,0,0"/>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+
+                <!-- Opponent Board. Wrapped in a ScrollViewer so the
+                     per-pile "Size: N / Splay: …" labels don't get
+                     clipped when the window isn't tall enough (e.g. at
+                     small resolutions or with many opponents). -->
+                <ScrollViewer Grid.Row="2"
+                              Margin="0,10,0,0"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="100"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="Opponent  Board"
+                                       FontFamily="Segoe UI"
+                                       FontWeight="Bold"
+                                       FontSize="14"
+                                       Foreground="#1F2937"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="(click the 'Size' label to see the whole stack)"
+                                       FontFamily="Segoe UI"
+                                       FontSize="12"
+                                       Foreground="#1F2937"
+                                       Margin="12,0,0,0"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2"
+                                       Text="Hand"
+                                       FontFamily="Segoe UI"
+                                       FontWeight="Bold"
+                                       FontSize="13"
+                                       Foreground="#1F2937"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="3"
+                                       Text="Score Pile"
+                                       FontFamily="Segoe UI"
+                                       FontWeight="Bold"
+                                       FontSize="13"
+                                       Foreground="#1F2937"
+                                       HorizontalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- One row per opponent. Populated by code-behind. -->
+                        <StackPanel x:Name="OpponentsPanel"
+                                    Margin="0,6,0,8"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

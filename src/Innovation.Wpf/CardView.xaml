@@ -1,0 +1,94 @@
+<UserControl x:Class="Innovation.Wpf.CardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Width="340" Height="200">
+    <!--
+        Detail card. Physical-card layout:
+          • upper-left corner: ONE icon slot (Card.Top)
+          • along the bottom : THREE icon slots (Left, Middle, Right)
+          • whichever of those four positions matches Card.HexagonSlot
+            renders empty — in the print card that space held a
+            thematic image with no gameplay effect.
+
+        Rows:
+          0 Auto — colored HEADER: top-icon slot + (title / dogma)
+          1 *    — white BODY: wrapped dogma text
+          2 Auto — colored FOOTER: 3 bottom-icon slots
+    -->
+    <Border x:Name="CardBorder"
+            CornerRadius="2"
+            BorderThickness="1"
+            BorderBrush="#55000000"
+            Background="White"
+            ClipToBounds="True"
+            SnapsToDevicePixels="True">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- ============ HEADER ============ -->
+            <Grid x:Name="HeaderGrid" Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Upper-left icon slot. Host is always present;
+                     content is added only when Top != HexagonSlot. -->
+                <Grid x:Name="TopSlot"
+                      Grid.Column="0"
+                      Width="34" Height="34"
+                      Margin="8,8,0,0"
+                      VerticalAlignment="Top"/>
+
+                <StackPanel Grid.Column="1" Margin="10,8,10,8">
+                    <TextBlock x:Name="TitleText"
+                               FontFamily="Segoe UI"
+                               FontWeight="Bold"
+                               FontSize="17"
+                               Foreground="#1F2937"
+                               TextTrimming="CharacterEllipsis"/>
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,4,0,0">
+                        <TextBlock Text="Dogma Symbol: "
+                                   FontFamily="Segoe UI"
+                                   FontSize="12"
+                                   Foreground="#1F2937"
+                                   VerticalAlignment="Center"/>
+                        <Grid x:Name="DogmaIconHost"
+                              Width="20" Height="20"
+                              VerticalAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+
+            <!-- ============ BODY ============ -->
+            <Border Grid.Row="1"
+                    Background="White"
+                    BorderThickness="0"
+                    Padding="10,8,10,8">
+                <StackPanel x:Name="EffectsPanel"/>
+            </Border>
+
+            <!-- ============ FOOTER ============ -->
+            <Grid x:Name="FooterGrid"
+                  Grid.Row="2"
+                  Height="44">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid x:Name="LeftSlot"   Grid.Column="0"/>
+                <Grid x:Name="MiddleSlot" Grid.Column="1"/>
+                <Grid x:Name="RightSlot"  Grid.Column="2"/>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

@@ -1,0 +1,12 @@
+<Application x:Class="Innovation.Wpf.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <!--
+            Global resource dictionary. Phase 7.x will gradually populate
+            this with brushes, styles, and data templates so the app has
+            a coherent visual system instead of ad-hoc per-control styling.
+        -->
+    </Application.Resources>
+</Application>

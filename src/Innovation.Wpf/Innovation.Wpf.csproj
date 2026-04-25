@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Innovation.Wpf</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Innovation.Core\Innovation.Core.csproj" />
+  </ItemGroup>
+
+  <!-- VB6 icon art (6 gameplay icons in full + _small, 5 card colors,
+       5 special achievement crests, plus x.jpg for the hex slot and
+       title.jpg) shipped as embedded WPF resources, accessed from
+       CardVisuals via pack://application URIs. -->
+  <ItemGroup>
+    <Resource Include="Resources\*.jpg" />
+  </ItemGroup>
+
+</Project>

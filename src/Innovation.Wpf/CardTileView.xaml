@@ -1,0 +1,90 @@
+<UserControl x:Class="Innovation.Wpf.CardTileView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Width="180" Height="130">
+    <!--
+        Top-of-pile tile. Same slot geometry as CardView (one icon
+        in the upper-left corner, three along the bottom; the slot
+        matching Card.HexagonSlot renders empty).
+
+        Includes the "Dogma Symbol:" indicator line, same as the
+        detail view, with the label and icon inline on the same row
+        so they read as one unit. (An earlier version put the icon
+        in a separate column from its label, which made them look
+        visually detached.)
+    -->
+    <Border x:Name="TileBorder"
+            CornerRadius="2"
+            BorderThickness="1"
+            BorderBrush="#55000000"
+            ClipToBounds="True"
+            SnapsToDevicePixels="True">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Top block: top-icon slot + title / age / dogma-symbol line -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid x:Name="TopSlot"
+                      Grid.Column="0"
+                      Width="28" Height="28"
+                      Margin="6,6,0,0"
+                      VerticalAlignment="Top"/>
+
+                <StackPanel Grid.Column="1"
+                            Margin="8,6,8,6"
+                            VerticalAlignment="Top">
+                    <TextBlock x:Name="TitleText"
+                               FontFamily="Segoe UI"
+                               FontWeight="Bold"
+                               FontSize="14"
+                               Foreground="#1F2937"
+                               TextTrimming="CharacterEllipsis"/>
+
+                    <!-- Second line: "Age N   Dogma Symbol: <icon>"
+                         Age number and the dogma-symbol indicator
+                         share one row so the text block above the
+                         title doesn't grow three lines tall. -->
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,2,0,0">
+                        <TextBlock x:Name="AgeText"
+                                   FontFamily="Segoe UI"
+                                   FontSize="12"
+                                   Foreground="#1F2937"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="   Dogma Symbol: "
+                                   FontFamily="Segoe UI"
+                                   FontSize="11"
+                                   Foreground="#1F2937"
+                                   VerticalAlignment="Center"/>
+                        <Grid x:Name="DogmaIconHost"
+                              Width="16" Height="16"
+                              VerticalAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+
+            <!-- Bottom: 3 icon slots -->
+            <Grid Grid.Row="1" Height="32" Margin="4,0,4,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid x:Name="LeftSlot"   Grid.Column="0"/>
+                <Grid x:Name="MiddleSlot" Grid.Column="1"/>
+                <Grid x:Name="RightSlot"  Grid.Column="2"/>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>
