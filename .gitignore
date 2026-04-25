@@ -2,6 +2,8 @@
 bin/
 obj/
 out/
+publish/
+*.zip
 [Dd]ebug/
 [Rr]elease/
 x64/
