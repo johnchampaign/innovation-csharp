@@ -45,6 +45,11 @@ public static class AchievementRules
     {
         if (!g.AvailableSpecialAchievements.Remove(name)) return false;
         p.SpecialAchievements.Add(name);
+        // Log here (rather than at each call site) so every path that
+        // claims a special — including mid-dogma cascades like the 6th
+        // tuck claiming Monument — shows up in both the file log and the
+        // UI mirror via GameLog.OnLine.
+        GameLog.Log($"{GameLog.P(p)} claims the {name} achievement");
         CheckAchievementWin(g);
         return true;
     }

@@ -333,9 +333,12 @@ public class Age2HandlerTests
 
         bool progressed = h.Execute(g, me, ctx);
         Assert.True(progressed);
-        // Two 2s drawn into hand.
-        Assert.Equal(2, me.Hand.Count);
-        Assert.All(me.Hand, id => Assert.Equal(2, g.Cards[id].Age));
+        // Card text says "draw and SCORE a 2" — the two drawn 2s land in
+        // the score pile, not the hand. Hand is empty (3 cards returned,
+        // none added).
+        Assert.Empty(me.Hand);
+        Assert.Equal(2, me.ScorePile.Count);
+        Assert.All(me.ScorePile, id => Assert.Equal(2, g.Cards[id].Age));
         // Age-2 deck lost exactly two cards.
         Assert.Equal(age2Before - 2, g.Decks[2].Count);
         // Returned cards went to the bottom of their own age decks (+1 each for 1s, +1 for 3).
