@@ -18,7 +18,8 @@ public sealed class EncyclopediaHandler : IDogmaHandler
         if (target.ScorePile.Count == 0) return false;
         int highest = target.ScorePile.Max(id => g.Cards[id].Age);
 
-        if (ctx.PendingChoice is null)
+        // Stage A: yes/no.
+        if (ctx.PendingChoice is null && ctx.HandlerState is null)
         {
             ctx.PendingChoice = new YesNoChoiceRequest
             {
@@ -29,19 +30,54 @@ public sealed class EncyclopediaHandler : IDogmaHandler
             return false;
         }
 
-        var yn = (YesNoChoiceRequest)ctx.PendingChoice;
-        ctx.PendingChoice = null;
-        if (!yn.ChosenYes) return false;
-
-        var toMeld = target.ScorePile.Where(id => g.Cards[id].Age == highest).ToArray();
-        foreach (var id in toMeld)
+        if (ctx.PendingChoice is YesNoChoiceRequest yn)
         {
-            target.ScorePile.Remove(id);
-            var color = g.Cards[id].Color;
-            target.Stack(color).Meld(id);
-            GameLog.Log($"{GameLog.P(target)} melds (from score) {GameLog.C(g, id)}");
-            SpecialAchievements.CheckAll(g);
+            ctx.PendingChoice = null;
+            if (!yn.ChosenYes) return false;
+
+            var toMeld = target.ScorePile.Where(id => g.Cards[id].Age == highest).ToArray();
+            if (toMeld.Length == 0) return false;
+            if (toMeld.Length == 1)
+            {
+                MeldFromScore(g, target, toMeld[0]);
+                return true;
+            }
+
+            // Multiple cards — ask the player for the meld order.
+            ctx.HandlerState = toMeld;
+            ctx.PendingChoice = new SelectCardOrderRequest
+            {
+                Prompt = "Encyclopedia: choose the meld order for the highest cards (last melded ends up on top of its color).",
+                PlayerIndex = target.Index,
+                Action = "meld",
+                CardIds = toMeld,
+            };
+            ctx.Paused = true;
+            return false;
         }
-        return toMeld.Length > 0;
+
+        // Stage B: order resolved.
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        var input = (int[])ctx.HandlerState!;
+        ctx.PendingChoice = null;
+        ctx.HandlerState = null;
+        var ordered = Mechanics.ValidateOrder(orderReq.ChosenOrder, input);
+        // ChosenOrder is the final pile arrangement, top-first. Reverse so
+        // the first listed melds last and ends up on top.
+        for (int i = ordered.Count - 1; i >= 0; i--)
+        {
+            MeldFromScore(g, target, ordered[i]);
+            if (g.IsGameOver) return true;
+        }
+        return ordered.Count > 0;
+    }
+
+    private static void MeldFromScore(GameState g, PlayerState target, int id)
+    {
+        target.ScorePile.Remove(id);
+        var color = g.Cards[id].Color;
+        target.Stack(color).Meld(id);
+        GameLog.Log($"{GameLog.P(target)} melds (from score) {GameLog.C(g, id)}");
+        SpecialAchievements.CheckAll(g);
     }
 }

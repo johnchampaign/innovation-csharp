@@ -94,6 +94,12 @@ public class Age1ChoiceHandlerTests
         req.ChosenCardIds = handPair;
         ctx.Paused = false;
 
+        // 2+ returns → handler asks for return order.
+        h.Execute(g, g.Players[0], ctx);
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        orderReq.ChosenOrder = orderReq.CardIds.ToList();
+        ctx.Paused = false;
+
         bool progressed = h.Execute(g, g.Players[0], ctx);
 
         Assert.True(progressed);
@@ -181,6 +187,12 @@ public class Age1ChoiceHandlerTests
         h.Execute(g, g.Players[0], ctx);
         var req = (SelectHandCardSubsetRequest)ctx.PendingChoice!;
         req.ChosenCardIds = castles;
+        ctx.Paused = false;
+
+        // Multi-meld → handler asks for meld order.
+        h.Execute(g, g.Players[0], ctx);
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        orderReq.ChosenOrder = orderReq.CardIds.ToList();
         ctx.Paused = false;
 
         bool progressed = h.Execute(g, g.Players[0], ctx);

@@ -379,4 +379,20 @@ public static class Mechanics
             if (g.FinalScore(p) == best) g.Winners.Add(p.Index);
         g.Phase = GamePhase.GameOver;
     }
+
+    /// <summary>
+    /// Validate a controller's response to a <see cref="SelectCardOrderRequest"/>.
+    /// Returns <paramref name="chosen"/> if it's a valid permutation of
+    /// <paramref name="input"/>; otherwise falls back to <paramref name="input"/>.
+    /// Used by handlers that meld / tuck / return multiple cards in player-
+    /// chosen order.
+    /// </summary>
+    public static IReadOnlyList<int> ValidateOrder(IReadOnlyList<int> chosen, IReadOnlyList<int> input)
+    {
+        if (chosen.Count == input.Count
+            && chosen.Distinct().Count() == chosen.Count
+            && chosen.All(input.Contains))
+            return chosen;
+        return input;
+    }
 }

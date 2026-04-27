@@ -14,31 +14,39 @@ namespace Innovation.Core.Handlers;
 /// (greater than activator's 0-so-far → opp scores), then activator
 /// returns 2 (greater than opp's 1 → activator also scores).
 ///
-/// Counts persist across target visits via
-/// <see cref="DogmaContext.HandlerState"/> as a <c>Dictionary&lt;int, int&gt;</c>
-/// keyed by player index. The handler is two-stage per target:
-///   1. Prompt the subset choice (or skip if hand is empty).
-///   2. Apply the returns, record the count, evaluate the reward against
-///      counts already recorded by earlier targets, and draw-score-an-8
-///      if strictly greater than every previous count.
+/// Three sub-stages per target visit:
+///   1. Subset prompt — pick which cards to return.
+///   2. Order prompt — when 2+ cards picked, the player picks the return
+///      order (last-returned ends up on top of its age deck).
+///   3. Apply: return each card, record this target's count, evaluate
+///      the "more than every prior target" reward.
+///
+/// Per-target cross-target counts persist via the <see cref="State.Counts"/>
+/// dictionary in <see cref="DogmaContext.HandlerState"/>.
 /// </summary>
 public sealed class DemocracyReturnHandler : IDogmaHandler
 {
+    private sealed class State
+    {
+        public Dictionary<int, int> Counts = new();
+        public int[]? PendingPicks;   // non-null while waiting for order answer
+    }
+
     public bool Execute(GameState g, PlayerState target, DogmaContext ctx)
     {
-        var counts = ctx.HandlerState as Dictionary<int, int>;
-        if (counts is null)
+        var state = ctx.HandlerState as State;
+        if (state is null)
         {
-            counts = new Dictionary<int, int>();
-            ctx.HandlerState = counts;
+            state = new State();
+            ctx.HandlerState = state;
         }
 
-        // Stage 1: ask for the subset (unless hand is empty).
-        if (ctx.PendingChoice is null)
+        // Subset stage.
+        if (state.PendingPicks is null && ctx.PendingChoice is null)
         {
             if (target.Hand.Count == 0)
             {
-                counts[target.Index] = 0;
+                state.Counts[target.Index] = 0;
                 return false;
             }
             ctx.PendingChoice = new SelectHandCardSubsetRequest
@@ -53,30 +61,62 @@ public sealed class DemocracyReturnHandler : IDogmaHandler
             return false;
         }
 
-        // Stage 2: apply returns, record count, evaluate reward.
-        var req = (SelectHandCardSubsetRequest)ctx.PendingChoice;
-        ctx.PendingChoice = null;
+        // Subset answered.
+        if (state.PendingPicks is null && ctx.PendingChoice is SelectHandCardSubsetRequest subset)
+        {
+            ctx.PendingChoice = null;
+            var picks = subset.ChosenCardIds.ToArray();
+            if (picks.Length == 0)
+            {
+                state.Counts[target.Index] = 0;
+                return false;
+            }
+            if (picks.Length == 1)
+            {
+                return ApplyReturnsAndEvaluate(g, target, picks, state);
+            }
+            // 2+ picks — ask order.
+            state.PendingPicks = picks;
+            ctx.PendingChoice = new SelectCardOrderRequest
+            {
+                Prompt = "Democracy: choose the return order.",
+                PlayerIndex = target.Index,
+                Action = "return",
+                CardIds = picks,
+            };
+            ctx.Paused = true;
+            return false;
+        }
 
-        var picks = req.ChosenCardIds.ToArray();
-        foreach (var id in picks) Mechanics.Return(g, target, id);
-        counts[target.Index] = picks.Length;
+        // Order answered.
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        var input = state.PendingPicks!;
+        ctx.PendingChoice = null;
+        state.PendingPicks = null;
+        var ordered = Mechanics.ValidateOrder(orderReq.ChosenOrder, input);
+        return ApplyReturnsAndEvaluate(g, target, ordered, state);
+    }
+
+    private static bool ApplyReturnsAndEvaluate(GameState g, PlayerState target, IReadOnlyList<int> ids, State state)
+    {
+        // ids is final deck-arrangement top-first; reverse for application.
+        for (int i = ids.Count - 1; i >= 0; i--)
+            Mechanics.Return(g, target, ids[i]);
+        state.Counts[target.Index] = ids.Count;
 
         // Reward: strictly more cards returned than any *previously* recorded
         // target this dogma. Equal counts don't qualify (rules: "more than").
-        // A target who returned 0 can't have returned more than anyone, so
-        // skip the draw outright.
-        if (picks.Length > 0)
+        if (ids.Count > 0)
         {
             bool moreThanAll = true;
-            foreach (var (idx, c) in counts)
+            foreach (var (idx, c) in state.Counts)
             {
                 if (idx == target.Index) continue;
-                if (c >= picks.Length) { moreThanAll = false; break; }
+                if (c >= ids.Count) { moreThanAll = false; break; }
             }
             if (moreThanAll)
                 Mechanics.DrawAndScore(g, target, 8);
         }
-
-        return picks.Length > 0;
+        return ids.Count > 0;
     }
 }

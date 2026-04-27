@@ -99,6 +99,8 @@ public class HumanControllerTests
 
         public IReadOnlyList<int> PromptScoreCardSubset(GameState g, PlayerState self, SelectScoreCardSubsetRequest req)
             => req.EligibleCardIds.Take(req.MinCount).ToList();
+        public IReadOnlyList<int> PromptCardOrder(GameState g, PlayerState self, SelectCardOrderRequest req)
+            => req.CardIds;
 
         public IReadOnlyList<int> PromptStackOrder(GameState g, PlayerState self, SelectStackOrderRequest req)
             => req.CurrentOrder;
@@ -242,6 +244,8 @@ public class HumanControllerTests
             => req.EligibleCardIds.Count > 0 ? req.EligibleCardIds[0] : (req.AllowNone ? (int?)null : throw new InvalidOperationException());
         public IReadOnlyList<int> PromptScoreCardSubset(GameState g, PlayerState self, SelectScoreCardSubsetRequest req)
             => req.EligibleCardIds.Take(req.MinCount).ToList();
+        public IReadOnlyList<int> PromptCardOrder(GameState g, PlayerState self, SelectCardOrderRequest req)
+            => req.CardIds;
         public IReadOnlyList<int> PromptStackOrder(GameState g, PlayerState self, SelectStackOrderRequest req)
             => req.CurrentOrder;
         public int? PromptValue(GameState g, PlayerState self, SelectValueRequest req)

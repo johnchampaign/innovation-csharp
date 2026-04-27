@@ -529,10 +529,10 @@ public static class CardRegistrations
         // ---------- Age 6 ----------
 
         RegisterMulti(r, cards, "Atomic Theory", Icon.Lightbulb,
-            new DogmaEffect(false, "You may splay your blue cards right.",
-                new AtomicTheorySplayHandler()),
             new DogmaEffect(false, "Draw and meld a 7.",
-                new AtomicTheoryDrawMeldHandler()));
+                new AtomicTheoryDrawMeldHandler()),
+            new DogmaEffect(false, "You may splay your blue cards right.",
+                new AtomicTheorySplayHandler()));
 
         RegisterMulti(r, cards, "Canning", Icon.Factory,
             new DogmaEffect(false,

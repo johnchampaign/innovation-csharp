@@ -24,16 +24,39 @@ public sealed class QuantumTheoryHandler : IDogmaHandler
             return false;
         }
 
-        var req = (SelectHandCardSubsetRequest)ctx.PendingChoice;
+        if (ctx.PendingChoice is SelectHandCardSubsetRequest subset)
+        {
+            ctx.PendingChoice = null;
+            var picks = subset.ChosenCardIds.ToArray();
+            if (picks.Length == 0) return false;
+            if (picks.Length == 1)
+            {
+                Mechanics.Return(g, target, picks[0]);
+                return true;
+            }
+            // 2 picks → ask for order, then return both, then bonus.
+            ctx.HandlerState = picks;
+            ctx.PendingChoice = new SelectCardOrderRequest
+            {
+                Prompt = "Quantum Theory: choose the return order.",
+                PlayerIndex = target.Index,
+                Action = "return",
+                CardIds = picks,
+            };
+            ctx.Paused = true;
+            return false;
+        }
+
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        var input = (int[])ctx.HandlerState!;
         ctx.PendingChoice = null;
+        ctx.HandlerState = null;
+        var ordered = Mechanics.ValidateOrder(orderReq.ChosenOrder, input);
+        // Reverse: chosen is deck-arrangement top-first.
+        for (int i = ordered.Count - 1; i >= 0; i--)
+            Mechanics.Return(g, target, ordered[i]);
 
-        if (req.ChosenCardIds.Count == 0) return false;
-
-        foreach (var id in req.ChosenCardIds)
-            Mechanics.Return(g, target, id);
-
-        if (req.ChosenCardIds.Count < 2) return true;
-
+        // 2 returns triggers the bonus.
         Mechanics.DrawFromAge(g, target, 10);
         if (g.IsGameOver) return true;
         Mechanics.DrawAndScore(g, target, 10);

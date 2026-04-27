@@ -75,6 +75,13 @@ public interface IPlayerController
     IReadOnlyList<int> ChooseStackOrder(GameState g, PlayerState self, SelectStackOrderRequest req);
 
     /// <summary>
+    /// Answer a pending "order these cards" prompt for a multi-meld /
+    /// multi-tuck / multi-return step. Default is to keep the input order
+    /// (the AI doesn't care; humans will see a reorder dialog).
+    /// </summary>
+    IReadOnlyList<int> ChooseCardOrder(GameState g, PlayerState self, SelectCardOrderRequest req);
+
+    /// <summary>
     /// Answer a pending "choose a card value" prompt. Returning null is only
     /// legal when <see cref="SelectValueRequest.AllowNone"/> is true.
     /// </summary>

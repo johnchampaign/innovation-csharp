@@ -31,15 +31,39 @@ public sealed class ReformationTuckHandler : IDogmaHandler
             return false;
         }
 
-        var req = (SelectHandCardSubsetRequest)ctx.PendingChoice!;
+        if (ctx.PendingChoice is SelectHandCardSubsetRequest subset)
+        {
+            ctx.PendingChoice = null;
+            var picks = subset.ChosenCardIds.ToArray();
+            if (picks.Length == 0) { ctx.HandlerState = null; return false; }
+            if (picks.Length == 1)
+            {
+                Mechanics.Tuck(g, target, picks[0]);
+                ctx.HandlerState = null;
+                return true;
+            }
+            ctx.HandlerState = picks;
+            ctx.PendingChoice = new SelectCardOrderRequest
+            {
+                Prompt = "Reformation: choose the tuck order (last tucked is at the bottom).",
+                PlayerIndex = target.Index,
+                Action = "tuck",
+                CardIds = picks,
+            };
+            ctx.Paused = true;
+            return false;
+        }
+
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        var input = (int[])ctx.HandlerState!;
         ctx.PendingChoice = null;
         ctx.HandlerState = null;
-        if (req.ChosenCardIds.Count == 0) return false;
-        foreach (var id in req.ChosenCardIds)
+        var ordered = Mechanics.ValidateOrder(orderReq.ChosenOrder, input);
+        foreach (var id in ordered)
         {
             Mechanics.Tuck(g, target, id);
             if (g.IsGameOver) return true;
         }
-        return true;
+        return ordered.Count > 0;
     }
 }

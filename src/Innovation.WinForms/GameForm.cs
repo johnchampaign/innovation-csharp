@@ -1532,6 +1532,12 @@ public sealed class GameForm : Form, IUserPromptSink
             "PromptScoreCardSubset not implemented in the WinForms UI (use WPF).");
     }
 
+    public IReadOnlyList<int> PromptCardOrder(GameState g, PlayerState self, SelectCardOrderRequest req)
+    {
+        throw new NotImplementedException(
+            "PromptCardOrder not implemented in the WinForms UI (use WPF).");
+    }
+
     public IReadOnlyList<int> PromptStackOrder(GameState g, PlayerState self, SelectStackOrderRequest req)
     {
         throw new NotImplementedException("PromptStackOrder not implemented in the WinForms UI (use WPF).");

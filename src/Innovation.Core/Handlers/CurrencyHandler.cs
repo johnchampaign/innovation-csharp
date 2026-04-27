@@ -31,23 +31,54 @@ public sealed class CurrencyHandler : IDogmaHandler
             return false;
         }
 
-        var req = (SelectHandCardSubsetRequest)ctx.PendingChoice;
-        ctx.PendingChoice = null;
-
-        if (req.ChosenCardIds.Count == 0) return false;
-
-        var distinctAges = new HashSet<int>();
-        foreach (var id in req.ChosenCardIds)
+        if (ctx.PendingChoice is SelectHandCardSubsetRequest subset)
         {
+            ctx.PendingChoice = null;
+            var picks = subset.ChosenCardIds.ToArray();
+            if (picks.Length == 0) return false;
+            if (picks.Length == 1)
+            {
+                ApplyReturnsAndScore(g, target, picks);
+                return true;
+            }
+            ctx.HandlerState = picks;
+            ctx.PendingChoice = new SelectCardOrderRequest
+            {
+                Prompt = "Currency: choose the return order (last-returned card sits on top of its age deck and will be drawn first).",
+                PlayerIndex = target.Index,
+                Action = "return",
+                CardIds = picks,
+            };
+            ctx.Paused = true;
+            return false;
+        }
+
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        var input = (int[])ctx.HandlerState!;
+        ctx.PendingChoice = null;
+        ctx.HandlerState = null;
+        var ordered = Mechanics.ValidateOrder(orderReq.ChosenOrder, input);
+        ApplyReturnsAndScore(g, target, ordered);
+        return ordered.Count > 0;
+    }
+
+    private static void ApplyReturnsAndScore(GameState g, PlayerState target, IReadOnlyList<int> ids)
+    {
+        // ids is the player's chosen order top-first (next-drawn → drawn-last).
+        // Decks add to the end and pop from the end, so apply in REVERSE: the
+        // last id returned ends up on top of the deck, which should be the
+        // FIRST in the chosen order.
+        var distinctAges = new HashSet<int>();
+        for (int i = ids.Count - 1; i >= 0; i--)
+        {
+            int id = ids[i];
             distinctAges.Add(g.Cards[id].Age);
             Mechanics.Return(g, target, id);
         }
-
         for (int i = 0; i < distinctAges.Count; i++)
         {
+            if (g.IsGameOver) return;
             Mechanics.DrawAndScore(g, target, 2);
-            if (g.IsGameOver) return true;
         }
-        return true;
     }
 }

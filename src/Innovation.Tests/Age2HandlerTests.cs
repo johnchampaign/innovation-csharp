@@ -331,6 +331,12 @@ public class Age2HandlerTests
         req.ChosenCardIds = new[] { ones[0], ones[1], three };
         ctx.Paused = false;
 
+        // 3 returns → handler asks for return order.
+        h.Execute(g, me, ctx);
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        orderReq.ChosenOrder = orderReq.CardIds.ToList();
+        ctx.Paused = false;
+
         bool progressed = h.Execute(g, me, ctx);
         Assert.True(progressed);
         // Card text says "draw and SCORE a 2" — the two drawn 2s land in
@@ -729,8 +735,14 @@ public class Age2HandlerTests
         req.ChosenCardIds = new[] { c1, c2 };
         ctx.Paused = false;
 
+        // 2 melded → order pick.
+        h.Execute(g, me, ctx);
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        orderReq.ChosenOrder = orderReq.CardIds.ToList();
+        ctx.Paused = false;
+
         Assert.True(h.Execute(g, me, ctx));
-        Assert.Null(ctx.PendingChoice);   // no exchange prompt raised
+        Assert.Null(ctx.PendingChoice);   // no exchange prompt raised (no top red)
     }
 
     [Fact]
@@ -755,6 +767,14 @@ public class Age2HandlerTests
         h.Execute(g, me, ctx);
         var req = (SelectHandCardSubsetRequest)ctx.PendingChoice!;
         req.ChosenCardIds = new[] { red, other };
+        ctx.Paused = false;
+
+        // 2 picks → meld-order request.
+        h.Execute(g, me, ctx);
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        // Meld red LAST so it ends up on top of red pile (the exchange leg
+        // requires a top red). Swap: put `other` first, `red` last.
+        orderReq.ChosenOrder = new[] { other, red };
         ctx.Paused = false;
 
         // Phase 1 resume triggers Phase 2 prompt.
@@ -787,6 +807,12 @@ public class Age2HandlerTests
         h.Execute(g, me, ctx);
         var req = (SelectHandCardSubsetRequest)ctx.PendingChoice!;
         req.ChosenCardIds = new[] { red, other };
+        ctx.Paused = false;
+
+        // 2 picks → meld-order request. Place red on top so the exchange leg fires.
+        h.Execute(g, me, ctx);
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        orderReq.ChosenOrder = new[] { other, red };
         ctx.Paused = false;
 
         h.Execute(g, me, ctx);

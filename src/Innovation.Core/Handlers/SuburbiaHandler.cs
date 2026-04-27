@@ -24,17 +24,44 @@ public sealed class SuburbiaHandler : IDogmaHandler
             return false;
         }
 
-        var req = (SelectHandCardSubsetRequest)ctx.PendingChoice;
-        ctx.PendingChoice = null;
-        int tucked = req.ChosenCardIds.Count;
-        foreach (var id in req.ChosenCardIds)
-            Mechanics.Tuck(g, target, id);
+        if (ctx.PendingChoice is SelectHandCardSubsetRequest subset)
+        {
+            ctx.PendingChoice = null;
+            var picks = subset.ChosenCardIds.ToArray();
+            if (picks.Length == 0) return false;
+            if (picks.Length == 1)
+            {
+                Mechanics.Tuck(g, target, picks[0]);
+                if (!g.IsGameOver) Mechanics.DrawAndScore(g, target, 1);
+                return true;
+            }
+            ctx.HandlerState = picks;
+            ctx.PendingChoice = new SelectCardOrderRequest
+            {
+                Prompt = "Suburbia: choose the tuck order (last tucked is at the bottom).",
+                PlayerIndex = target.Index,
+                Action = "tuck",
+                CardIds = picks,
+            };
+            ctx.Paused = true;
+            return false;
+        }
 
-        for (int i = 0; i < tucked; i++)
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        var input = (int[])ctx.HandlerState!;
+        ctx.PendingChoice = null;
+        ctx.HandlerState = null;
+        var ordered = Mechanics.ValidateOrder(orderReq.ChosenOrder, input);
+        foreach (var id in ordered)
+        {
+            Mechanics.Tuck(g, target, id);
+            if (g.IsGameOver) return true;
+        }
+        for (int i = 0; i < ordered.Count; i++)
         {
             Mechanics.DrawAndScore(g, target, 1);
             if (g.IsGameOver) return true;
         }
-        return tucked > 0;
+        return ordered.Count > 0;
     }
 }

@@ -1442,6 +1442,45 @@ public partial class MainWindow : Window, IUserPromptSink
         }
     }
 
+    public IReadOnlyList<int> PromptCardOrder(GameState g, PlayerState self, SelectCardOrderRequest req)
+    {
+        // Dialog shows the FINAL placement (top-first). Each action gets
+        // labels appropriate to where the cards land:
+        //   • meld   → top of resulting pile / bottom of melded chunk
+        //   • tuck   → top of tucked chunk (just below existing bottom) / very bottom
+        //   • return → next card drawn from this age / last card drawn
+        IReadOnlyList<int>? chosen = null;
+        Dispatcher.Invoke(() =>
+        {
+            var cards = req.CardIds.Select(id => _cards[id]).ToList();
+            string title = req.Action switch
+            {
+                "meld"   => $"Meld order — final pile arrangement",
+                "tuck"   => $"Tuck order — tucked chunk arrangement",
+                "return" => $"Return order — deck arrangement",
+                _        => $"Order ({req.Action})",
+            };
+            (string top, string bottom, string sub) = req.Action switch
+            {
+                "meld"   => ("Top of pile (last melded)",
+                             "Bottom of melded chunk (first melded)",
+                             "Order these cards as you want them stacked, top to bottom. The top card is the one you'll show as the active dogma; the bottom card is melded first so it ends up underneath."),
+                "tuck"   => ("Top of tucked chunk (just below existing bottom)",
+                             "Very bottom of pile (last tucked)",
+                             "Order these cards as you want them stacked at the bottom of their colour piles, top to bottom of the new chunk."),
+                "return" => ("Next card drawn from this age",
+                             "Last card drawn from this age",
+                             "Order these cards from next-drawn (top) to drawn-last (bottom of deck)."),
+                _        => ("First", "Last", req.Prompt),
+            };
+            var dlg = new StackReorderDialog(title, cards, Splay.None,
+                topLabel: top, bottomLabel: bottom, subtitle: sub) { Owner = this };
+            dlg.ShowDialog();
+            chosen = dlg.Result;
+        });
+        return chosen ?? req.CardIds.ToList();
+    }
+
     public IReadOnlyList<int> PromptStackOrder(GameState g, PlayerState self, SelectStackOrderRequest req)
     {
         // Modal Up/Down reorder dialog. Cancel keeps the original order.

@@ -31,19 +31,45 @@ public sealed class PotteryReturnAndScoreHandler : IDogmaHandler
             return false;
         }
 
-        var req = (SelectHandCardSubsetRequest)ctx.PendingChoice;
+        if (ctx.PendingChoice is SelectHandCardSubsetRequest subset)
+        {
+            ctx.PendingChoice = null;
+            var picks = subset.ChosenCardIds.ToArray();
+            if (picks.Length == 0) return false;
+            if (picks.Length == 1)
+            {
+                ApplyReturnsAndScore(g, target, picks);
+                return true;
+            }
+            ctx.HandlerState = picks;
+            ctx.PendingChoice = new SelectCardOrderRequest
+            {
+                Prompt = "Pottery: choose the return order (last-returned sits on top of its age deck).",
+                PlayerIndex = target.Index,
+                Action = "return",
+                CardIds = picks,
+            };
+            ctx.Paused = true;
+            return false;
+        }
+
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        var input = (int[])ctx.HandlerState!;
         ctx.PendingChoice = null;
+        ctx.HandlerState = null;
+        var ordered = Mechanics.ValidateOrder(orderReq.ChosenOrder, input);
+        ApplyReturnsAndScore(g, target, ordered);
+        return ordered.Count > 0;
+    }
 
-        int returned = req.ChosenCardIds.Count;
-        if (returned == 0) return false;   // declined — no progress
-
-        foreach (var id in req.ChosenCardIds)
-            Mechanics.Return(g, target, id);
-
-        // Draw-and-score at age = count (1–3 since the request capped at 3).
-        int drawn = Mechanics.DrawFromAge(g, target, returned);
-        if (drawn < 0 || g.IsGameOver) return true;
+    private static void ApplyReturnsAndScore(GameState g, PlayerState target, IReadOnlyList<int> ids)
+    {
+        // ids is the player's chosen order top-first; reverse so the last
+        // returned ends up on top of the deck (= first in the chosen order).
+        for (int i = ids.Count - 1; i >= 0; i--)
+            Mechanics.Return(g, target, ids[i]);
+        int drawn = Mechanics.DrawFromAge(g, target, ids.Count);
+        if (drawn < 0 || g.IsGameOver) return;
         Mechanics.Score(g, target, drawn);
-        return true;
     }
 }

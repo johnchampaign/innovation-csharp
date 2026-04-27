@@ -58,7 +58,14 @@ public class ReformationHandlerTests
         ctx.Paused = false;
 
         bool second = h.Execute(g, me, ctx);
-        Assert.True(second);
+        // Multi-tuck → handler now pauses for tuck-order pick.
+        Assert.False(second);
+        Assert.True(ctx.Paused);
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        orderReq.ChosenOrder = orderReq.CardIds.ToList();
+        ctx.Paused = false;
+
+        Assert.True(h.Execute(g, me, ctx));
         Assert.Empty(me.Hand);
         Assert.Contains(invention, me.Stack(g.Cards[invention].Color).Cards);
         Assert.Contains(physics, me.Stack(g.Cards[physics].Color).Cards);
@@ -89,6 +96,12 @@ public class ReformationHandlerTests
         req.ChosenCardIds = new[] { invention, physics };
         ctx.Paused = false;
 
+        // Multi-tuck → handler now pauses for tuck-order pick.
+        Assert.False(h.Execute(g, me, ctx));
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        orderReq.ChosenOrder = orderReq.CardIds.ToList();
+        ctx.Paused = false;
+
         Assert.True(h.Execute(g, me, ctx));
         Assert.Empty(me.Hand);
         Assert.Contains(invention, me.Stack(g.Cards[invention].Color).Cards);
@@ -109,6 +122,7 @@ public class ReformationHandlerTests
         public int? ChooseScoreCard(GameState g, PlayerState self, SelectScoreCardRequest req) => null;
         public IReadOnlyList<int> ChooseScoreCardSubset(GameState g, PlayerState self, SelectScoreCardSubsetRequest req) => Array.Empty<int>();
         public IReadOnlyList<int> ChooseStackOrder(GameState g, PlayerState self, SelectStackOrderRequest req) => req.CurrentOrder.ToList();
+        public IReadOnlyList<int> ChooseCardOrder(GameState g, PlayerState self, SelectCardOrderRequest req) => req.CardIds.ToList();
         public int? ChooseValue(GameState g, PlayerState self, SelectValueRequest req) => null;
     }
 

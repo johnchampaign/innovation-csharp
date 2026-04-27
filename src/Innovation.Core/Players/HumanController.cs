@@ -50,6 +50,9 @@ public sealed class HumanController : IPlayerController
     public IReadOnlyList<int> ChooseStackOrder(GameState g, PlayerState self, SelectStackOrderRequest req)
         => _sink.PromptStackOrder(g, self, req);
 
+    public IReadOnlyList<int> ChooseCardOrder(GameState g, PlayerState self, SelectCardOrderRequest req)
+        => _sink.PromptCardOrder(g, self, req);
+
     public int? ChooseValue(GameState g, PlayerState self, SelectValueRequest req)
         => _sink.PromptValue(g, self, req);
 }

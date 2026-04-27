@@ -182,6 +182,9 @@ public sealed class GreedyController : IPlayerController
         return req.CurrentOrder.ToList();
     }
 
+    public IReadOnlyList<int> ChooseCardOrder(GameState g, PlayerState self, SelectCardOrderRequest req)
+        => req.CardIds.ToList();   // no preference — input order is fine
+
     public int? ChooseValue(GameState g, PlayerState self, SelectValueRequest req)
     {
         if (req.EligibleValues.Count == 0) return null;

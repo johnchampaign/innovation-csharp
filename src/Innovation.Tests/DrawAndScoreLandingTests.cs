@@ -64,6 +64,12 @@ public class DrawAndScoreLandingTests
         req.ChosenCardIds = new[] { a1, a2, a3 };
         ctx.Paused = false;
 
+        // 2+ returns → handler asks for return order.
+        Assert.False(h.Execute(g, me, ctx));
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        orderReq.ChosenOrder = orderReq.CardIds.ToList();
+        ctx.Paused = false;
+
         bool progressed = h.Execute(g, me, ctx);
         Assert.True(progressed);
 
@@ -123,6 +129,12 @@ public class DrawAndScoreLandingTests
         Assert.False(h.Execute(g, me, ctx));
         var req = (SelectHandCardSubsetRequest)ctx.PendingChoice!;
         req.ChosenCardIds = new[] { a, b, c };
+        ctx.Paused = false;
+
+        // 3 returns → handler asks for return order.
+        Assert.False(h.Execute(g, me, ctx));
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        orderReq.ChosenOrder = orderReq.CardIds.ToList();
         ctx.Paused = false;
 
         Assert.True(h.Execute(g, me, ctx));

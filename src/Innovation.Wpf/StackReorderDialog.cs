@@ -22,7 +22,13 @@ public sealed class StackReorderDialog : Window
     /// <summary>The accepted new order (top-first), or null if cancelled.</summary>
     public IReadOnlyList<int>? Result { get; private set; }
 
-    public StackReorderDialog(string title, IReadOnlyList<Card> cardsTopFirst, Splay splay)
+    public StackReorderDialog(
+        string title,
+        IReadOnlyList<Card> cardsTopFirst,
+        Splay splay,
+        string? topLabel = null,
+        string? bottomLabel = null,
+        string? subtitle = null)
     {
         Title = title;
         SizeToContent = SizeToContent.WidthAndHeight;
@@ -35,13 +41,23 @@ public sealed class StackReorderDialog : Window
         var root = new StackPanel { Margin = new Thickness(12) };
         root.Children.Add(new TextBlock
         {
-            Text = $"{title}  —  {cardsTopFirst.Count} card(s), splay: {splay}",
+            Text = $"{title}  —  {cardsTopFirst.Count} card(s)" + (splay != Splay.None ? $", splay: {splay}" : ""),
             FontWeight = FontWeights.Bold,
             Margin = new Thickness(0, 0, 0, 6),
         });
+        if (!string.IsNullOrEmpty(subtitle))
+        {
+            root.Children.Add(new TextBlock
+            {
+                Text = subtitle,
+                Margin = new Thickness(0, 0, 0, 4),
+                TextWrapping = TextWrapping.Wrap,
+                MaxWidth = 360,
+            });
+        }
         root.Children.Add(new TextBlock
         {
-            Text = "Top of stack",
+            Text = topLabel ?? "Top of stack",
             FontStyle = FontStyles.Italic,
             Margin = new Thickness(0, 0, 0, 4),
         });
@@ -61,7 +77,7 @@ public sealed class StackReorderDialog : Window
 
         root.Children.Add(new TextBlock
         {
-            Text = "Bottom of stack",
+            Text = bottomLabel ?? "Bottom of stack",
             FontStyle = FontStyles.Italic,
             Margin = new Thickness(0, 4, 0, 8),
         });

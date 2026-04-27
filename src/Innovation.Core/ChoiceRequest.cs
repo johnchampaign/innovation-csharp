@@ -108,6 +108,36 @@ public sealed class SelectStackOrderRequest : ChoiceRequest
 }
 
 /// <summary>
+/// "Order this list of cards." Used whenever multiple cards are about to be
+/// melded / tucked / returned in the same step. Semantics: <see cref="ChosenOrder"/>
+/// is the FINAL placement, top-first. So for a multi-meld, the first id in the
+/// chosen order is what the player wants on top of the resulting pile; for a
+/// multi-tuck, the first id is the topmost of the tucked chunk (just below the
+/// existing bottom); for a multi-return, the first id is the next-drawn card
+/// from that age deck. Each handler reverses the list internally as needed
+/// (since melding pushes onto top, tucking pushes onto bottom, etc.) so the
+/// player's mental model is "what does the result look like".
+///
+/// Score-pile and hand additions are unordered and don't use this.
+/// </summary>
+public sealed class SelectCardOrderRequest : ChoiceRequest
+{
+    /// <summary>Verb shown in the dialog title — e.g. "meld", "tuck", "return".</summary>
+    public string Action { get; init; } = "process";
+
+    /// <summary>Cards to be ordered. Input order is just an arbitrary listing.</summary>
+    public IReadOnlyList<int> CardIds { get; init; } = Array.Empty<int>();
+
+    /// <summary>
+    /// Caller writes a permutation of <see cref="CardIds"/> representing the
+    /// FINAL placement, top-first (what the player sees in the dialog). For
+    /// melds and returns the handler reverses this internally; for tucks it
+    /// applies in the listed order.
+    /// </summary>
+    public IReadOnlyList<int> ChosenOrder { get; set; } = Array.Empty<int>();
+}
+
+/// <summary>
 /// "Choose a card value (age 1-10)." Used by Mass Media to pick which age of
 /// cards to return from every score pile.
 /// </summary>

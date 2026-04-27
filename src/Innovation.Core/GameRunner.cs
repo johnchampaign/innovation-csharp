@@ -199,6 +199,9 @@ public sealed class GameRunner
             case SelectStackOrderRequest sso:
                 sso.ChosenOrder = controller.ChooseStackOrder(_g, self, sso);
                 break;
+            case SelectCardOrderRequest sco:
+                sco.ChosenOrder = controller.ChooseCardOrder(_g, self, sco);
+                break;
             case SelectValueRequest sv:
                 sv.ChosenValue = controller.ChooseValue(_g, self, sv);
                 break;

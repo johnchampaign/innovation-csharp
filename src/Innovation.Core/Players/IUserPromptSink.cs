@@ -34,5 +34,7 @@ public interface IUserPromptSink
 
     IReadOnlyList<int> PromptStackOrder(GameState g, PlayerState self, SelectStackOrderRequest req);
 
+    IReadOnlyList<int> PromptCardOrder(GameState g, PlayerState self, SelectCardOrderRequest req);
+
     int? PromptValue(GameState g, PlayerState self, SelectValueRequest req);
 }

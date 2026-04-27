@@ -51,6 +51,9 @@ public sealed class RandomController : IPlayerController
         return result;
     }
 
+    public IReadOnlyList<int> ChooseCardOrder(GameState g, PlayerState self, SelectCardOrderRequest req)
+        => req.CardIds.ToList();   // input order is acceptable
+
     public IReadOnlyList<int> ChooseScoreCardSubset(GameState g, PlayerState self, SelectScoreCardSubsetRequest req)
     {
         int maxTakeable = Math.Min(req.MaxCount, req.EligibleCardIds.Count);

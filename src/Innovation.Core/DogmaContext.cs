@@ -98,6 +98,18 @@ public sealed class DogmaContext
     /// </summary>
     public Stack<NestedDogmaFrame> NestedFrames { get; } = new();
 
+    /// <summary>
+    /// Each player's count of <see cref="FeaturedIcon"/>, snapshotted at the
+    /// moment of dogma activation. Per the rulebook, icon counts are frozen
+    /// for the duration of a dogma — even if the activator or any opponent
+    /// loses or gains a featured-icon card mid-resolution, eligibility for
+    /// subsequent effects of the same dogma uses these activation-time
+    /// counts. Indexed by player index. Populated by
+    /// <see cref="DogmaEngine.Execute"/>; null only on contexts built
+    /// directly in tests, in which case the engine recomputes on demand.
+    /// </summary>
+    public int[]? FrozenIconCounts { get; set; }
+
     public DogmaContext(int cardId, int activatingPlayerIndex, Icon featuredIcon)
     {
         CardId = cardId;

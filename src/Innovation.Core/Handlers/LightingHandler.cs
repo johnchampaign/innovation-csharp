@@ -24,15 +24,44 @@ public sealed class LightingHandler : IDogmaHandler
             return false;
         }
 
-        var req = (SelectHandCardSubsetRequest)ctx.PendingChoice;
-        ctx.PendingChoice = null;
-        if (req.ChosenCardIds.Count == 0) return false;
+        if (ctx.PendingChoice is SelectHandCardSubsetRequest subset)
+        {
+            ctx.PendingChoice = null;
+            var picks = subset.ChosenCardIds.ToArray();
+            if (picks.Length == 0) return false;
+            if (picks.Length == 1)
+            {
+                Mechanics.Tuck(g, target, picks[0]);
+                if (!g.IsGameOver) Mechanics.DrawAndScore(g, target, 7);
+                return true;
+            }
+            // Multiple tucks — ask the player for tuck order. The order
+            // affects which card ends up on the bottom of which stack and
+            // therefore which icons are revealed by future splays.
+            ctx.HandlerState = picks;
+            ctx.PendingChoice = new SelectCardOrderRequest
+            {
+                Prompt = "Lighting: choose the tuck order (last tucked goes to the bottom of its color pile).",
+                PlayerIndex = target.Index,
+                Action = "tuck",
+                CardIds = picks,
+            };
+            ctx.Paused = true;
+            return false;
+        }
 
+        // Resume after tuck-order pick: apply tucks then award draws.
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        var input = (int[])ctx.HandlerState!;
+        ctx.PendingChoice = null;
+        ctx.HandlerState = null;
+        var ordered = Mechanics.ValidateOrder(orderReq.ChosenOrder, input);
         var distinct = new HashSet<int>();
-        foreach (var id in req.ChosenCardIds)
+        foreach (var id in ordered)
         {
             distinct.Add(g.Cards[id].Age);
             Mechanics.Tuck(g, target, id);
+            if (g.IsGameOver) return true;
         }
         foreach (var _ in distinct)
         {

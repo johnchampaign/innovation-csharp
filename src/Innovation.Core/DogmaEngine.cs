@@ -37,6 +37,15 @@ public sealed class DogmaEngine
     {
         var def = _registry.Get(cardId);
         var ctx = new DogmaContext(cardId, activatingPlayerIndex, def.FeaturedIcon);
+
+        // Per the rulebook, icon counts are FROZEN for the duration of a
+        // dogma. Snapshot the featured-icon count for every player at
+        // activation time so subsequent effects of this dogma use the same
+        // eligibility set even if effect 1 mutates someone's board.
+        ctx.FrozenIconCounts = new int[_g.Players.Length];
+        for (int i = 0; i < _g.Players.Length; i++)
+            ctx.FrozenIconCounts[i] = IconCounter.Count(_g.Players[i], def.FeaturedIcon, _g.Cards);
+
         GameLog.Log($"Dogma: {GameLog.P(activatingPlayerIndex)} activates {GameLog.C(_g, cardId)} (featured {def.FeaturedIcon})");
         Resume(ctx);
         return ctx;
@@ -66,16 +75,18 @@ public sealed class DogmaEngine
         {
             var effect = def.Effects[ctx.CurrentLevel];
 
-            // Compute targets once per level so mid-level state changes don't
-            // change who the level affects (matches VB6's pre-computed
-            // affected_by_dogma matrix).
+            // Compute targets once per level using the FROZEN icon counts
+            // (snapshotted at dogma activation, not recomputed). Per the
+            // rulebook, icon totals do not update during a dogma.
             if (ctx.CurrentTargetIndex == 0 && ctx.CurrentTargets.Count == 0)
             {
-                int activatorIcons = IconCounter.Count(activator, def.FeaturedIcon, _g.Cards);
-                ctx.CurrentTargets = ComputeTargets(ctx.ActivatingPlayerIndex, effect.IsDemand, activatorIcons, def.FeaturedIcon);
-                var counts = string.Join(", ", _g.Players.Select(pl => $"{GameLog.P(pl)}={IconCounter.Count(pl, def.FeaturedIcon, _g.Cards)}"));
+                int[] frozen = ctx.FrozenIconCounts
+                    ?? FreshFrozenIcons(def.FeaturedIcon);   // test paths
+                int activatorIcons = frozen[ctx.ActivatingPlayerIndex];
+                ctx.CurrentTargets = ComputeTargets(ctx.ActivatingPlayerIndex, effect.IsDemand, frozen);
+                var counts = string.Join(", ", _g.Players.Select((pl, i) => $"{GameLog.P(pl)}={frozen[i]}"));
                 var tgts = ctx.CurrentTargets.Count == 0 ? "(none)" : string.Join(",", ctx.CurrentTargets.Select(GameLog.P));
-                GameLog.Log($"Effect {ctx.CurrentLevel + 1} ({(effect.IsDemand ? "demand" : "share/non-demand")}) — {def.FeaturedIcon} counts: {counts}; targets: {tgts}");
+                GameLog.Log($"Effect {ctx.CurrentLevel + 1} ({(effect.IsDemand ? "demand" : "share/non-demand")}) — {def.FeaturedIcon} counts (frozen): {counts}; targets: {tgts}");
             }
 
             while (ctx.CurrentTargetIndex < ctx.CurrentTargets.Count)
@@ -160,20 +171,21 @@ public sealed class DogmaEngine
     /// <summary>
     /// Player indexes the current effect will run against, in turn order.
     /// Demand: non-active players with strictly fewer featured icons.
-    /// Share: active player first, then non-active with ≥ icons.
+    /// Share: sharers (≥ icons) first, then activator. Uses the frozen
+    /// activation-time icon counts.
     /// </summary>
-    private List<int> ComputeTargets(int activatingIdx, bool isDemand, int activatorIcons, Icon featured)
+    private List<int> ComputeTargets(int activatingIdx, bool isDemand, int[] frozenIcons)
     {
         var list = new List<int>();
         int n = _g.Players.Length;
+        int activatorIcons = frozenIcons[activatingIdx];
 
         if (isDemand)
         {
             for (int i = 1; i < n; i++)
             {
                 int idx = (activatingIdx + i) % n;
-                int count = IconCounter.Count(_g.Players[idx], featured, _g.Cards);
-                if (count < activatorIcons) list.Add(idx);
+                if (frozenIcons[idx] < activatorIcons) list.Add(idx);
             }
         }
         else
@@ -185,11 +197,24 @@ public sealed class DogmaEngine
             for (int i = 1; i < n; i++)
             {
                 int idx = (activatingIdx + i) % n;
-                int count = IconCounter.Count(_g.Players[idx], featured, _g.Cards);
-                if (count >= activatorIcons) list.Add(idx);
+                if (frozenIcons[idx] >= activatorIcons) list.Add(idx);
             }
             list.Add(activatingIdx);
         }
         return list;
+    }
+
+    /// <summary>
+    /// Fallback for tests that construct a DogmaContext directly without
+    /// going through <see cref="Execute"/>. Snapshots from current state.
+    /// In production every dogma starts in <see cref="Execute"/>, which
+    /// populates <see cref="DogmaContext.FrozenIconCounts"/> up front.
+    /// </summary>
+    private int[] FreshFrozenIcons(Icon featured)
+    {
+        var arr = new int[_g.Players.Length];
+        for (int i = 0; i < _g.Players.Length; i++)
+            arr[i] = IconCounter.Count(_g.Players[i], featured, _g.Cards);
+        return arr;
     }
 }
