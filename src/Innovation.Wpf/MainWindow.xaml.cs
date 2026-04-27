@@ -772,22 +772,68 @@ public partial class MainWindow : Window, IUserPromptSink
             };
             int captured = id;
             tile.MouseLeftButtonUp += (_, _) => OnHandCardClicked(captured);
+            tile.MouseRightButtonUp += (_, _) => OnHandCardRightClicked(captured);
             tile.MouseEnter += (_, _) => PreviewCard(_cards[captured]);
 
-            // Wrap in a Border so we can show a subset-pick highlight
-            // without having to mutate CardSummaryView's own chrome.
-            var frame = new Border
+            YourHandPanel.Children.Add(BuildPickFrame(tile, id, leftAlign: true));
+        }
+    }
+
+    /// Wrap a card tile in a Border (gold when picked) plus, when picked,
+    /// a small numbered badge overlay showing the 1-based selection order.
+    /// Used for both the hand panel and the score panel.
+    private FrameworkElement BuildPickFrame(FrameworkElement tile, int id, bool leftAlign)
+    {
+        int pickIndex = _subsetPicks.IndexOf(id);   // -1 if not picked
+        var border = new Border
+        {
+            Child = tile,
+            Margin = new Thickness(0, 0, 0, 2),
+            Padding = new Thickness(2),
+            BorderThickness = new Thickness(3),
+            BorderBrush = pickIndex >= 0
+                ? new SolidColorBrush(Color.FromRgb(0xE6, 0xB8, 0x1C))   // gold = picked
+                : Brushes.Transparent,
+            HorizontalAlignment = leftAlign ? HorizontalAlignment.Left : HorizontalAlignment.Stretch,
+        };
+        if (pickIndex < 0) return border;
+
+        // Picked: overlay a numbered badge in the top-right corner so the
+        // player can see their selection sequence at a glance.
+        var badge = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0xC6, 0x28, 0x28)),
+            CornerRadius = new CornerRadius(10),
+            Width = 22,
+            Height = 22,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = new Thickness(0, 4, 4, 0),
+            Child = new TextBlock
             {
-                Child = tile,
-                Margin = new Thickness(0, 0, 0, 2),
-                Padding = new Thickness(2),
-                BorderThickness = new Thickness(3),
-                BorderBrush = _subsetPicks.Contains(id)
-                    ? new SolidColorBrush(Color.FromRgb(0xE6, 0xB8, 0x1C))   // gold = picked
-                    : Brushes.Transparent,
-                HorizontalAlignment = HorizontalAlignment.Left,
-            };
-            YourHandPanel.Children.Add(frame);
+                Text = (pickIndex + 1).ToString(),
+                Foreground = Brushes.White,
+                FontWeight = FontWeights.Bold,
+                FontSize = 12,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            },
+        };
+        var grid = new Grid { HorizontalAlignment = leftAlign ? HorizontalAlignment.Left : HorizontalAlignment.Stretch };
+        grid.Children.Add(border);
+        grid.Children.Add(badge);
+        return grid;
+    }
+
+    private void OnHandCardRightClicked(int cardId)
+    {
+        // Right-click anywhere on a hand tile: if it's currently part of an
+        // active subset selection, deselect. Always cheap; also doubles as
+        // a "remove pick" undo.
+        if (_subsetPicks.Remove(cardId))
+        {
+            PopulateYourHand();
+            UpdateSubsetOkState();
         }
     }
 
@@ -811,20 +857,9 @@ public partial class MainWindow : Window, IUserPromptSink
             int capturedId = id;
             scoreTile.MouseEnter += (_, _) => PreviewCard(_cards[capturedId]);
             scoreTile.MouseLeftButtonUp += (_, _) => OnScoreCardClicked(capturedId);
+            scoreTile.MouseRightButtonUp += (_, _) => OnScoreCardRightClicked(capturedId);
 
-            // Same gold-border pick highlight as hand-card subset prompts.
-            var frame = new Border
-            {
-                Child = scoreTile,
-                Margin = new Thickness(0, 0, 0, 2),
-                Padding = new Thickness(2),
-                BorderThickness = new Thickness(3),
-                BorderBrush = _subsetPicks.Contains(id)
-                    ? new SolidColorBrush(Color.FromRgb(0xE6, 0xB8, 0x1C))   // gold = picked
-                    : Brushes.Transparent,
-                HorizontalAlignment = HorizontalAlignment.Left,
-            };
-            YourScorePanel.Children.Add(frame);
+            YourScorePanel.Children.Add(BuildPickFrame(scoreTile, id, leftAlign: true));
         }
     }
 
@@ -836,7 +871,17 @@ public partial class MainWindow : Window, IUserPromptSink
 
         if (_scoreSubsetEligibleIds is { } subs && subs.Contains(cardId))
         {
-            if (!_subsetPicks.Add(cardId)) _subsetPicks.Remove(cardId);
+            if (_subsetPicks.Contains(cardId)) _subsetPicks.Remove(cardId);
+            else _subsetPicks.Add(cardId);
+            PopulateYourScore();
+            UpdateSubsetOkState();
+        }
+    }
+
+    private void OnScoreCardRightClicked(int cardId)
+    {
+        if (_subsetPicks.Remove(cardId))
+        {
             PopulateYourScore();
             UpdateSubsetOkState();
         }
@@ -1015,7 +1060,11 @@ public partial class MainWindow : Window, IUserPromptSink
     // Only one of _subsetEligibleIds / _scoreSubsetEligibleIds is non-null
     // at a time; clicks in the corresponding panel toggle into _subsetPicks.
     private HashSet<int>? _scoreSubsetEligibleIds;
-    private readonly HashSet<int> _subsetPicks = new();
+    // Ordered (insertion-order) so the engine sees the player's pick
+    // sequence — handlers that go on to ask for meld/tuck/return order
+    // pre-populate the reorder dialog with this sequence. Toggle semantics
+    // via AddOrToggle/Remove.
+    private readonly List<int> _subsetPicks = new();
     private int _subsetMin, _subsetMax;
 
     private void WirePromptHandlers()
@@ -1052,7 +1101,8 @@ public partial class MainWindow : Window, IUserPromptSink
         }
         if (_subsetEligibleIds is { } subs && subs.Contains(cardId))
         {
-            if (!_subsetPicks.Add(cardId)) _subsetPicks.Remove(cardId);
+            if (_subsetPicks.Contains(cardId)) _subsetPicks.Remove(cardId);
+            else _subsetPicks.Add(cardId);
             PopulateYourHand();           // redraw to flip the selection border
             UpdateSubsetOkState();
             return;
@@ -1061,7 +1111,7 @@ public partial class MainWindow : Window, IUserPromptSink
 
     private void UpdateSubsetOkState()
     {
-        SubsetCountText.Text = $"Selected: {_subsetPicks.Count} (need {_subsetMin}–{_subsetMax})";
+        SubsetCountText.Text = $"Selected: {_subsetPicks.Count} (need {_subsetMin}–{_subsetMax}) — right-click a card to deselect";
         SubsetOkButton.IsEnabled =
             _subsetPicks.Count >= _subsetMin && _subsetPicks.Count <= _subsetMax;
     }
