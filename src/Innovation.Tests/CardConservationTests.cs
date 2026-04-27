@@ -237,14 +237,12 @@ public class CardConservationTests
         var ctx = new DogmaContext(0, 0, Icon.Factory);
         ctx.FrozenIconCounts = new[] { 4, 0 };   // direct test setup
 
+        // Per RAW each draw-and-tuck is atomic; no order prompt. Handler
+        // runs straight through.
         var h = new IndustrializationTuckHandler();
-        Assert.False(h.Execute(g, me, ctx));
-        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
-        Assert.Equal(2, orderReq.CardIds.Count);
-        orderReq.ChosenOrder = orderReq.CardIds.ToList();
-        ctx.Paused = false;
-
         Assert.True(h.Execute(g, me, ctx));
+        Assert.Null(ctx.PendingChoice);
+
         AssertAllCardsAccountedFor(g);
         // Two age-6s tucked under their respective color piles.
         int totalCardsOnBoard = me.Stacks.Sum(s => s.Count);
