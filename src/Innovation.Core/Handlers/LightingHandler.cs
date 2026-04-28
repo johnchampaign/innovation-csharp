@@ -29,13 +29,23 @@ public sealed class LightingHandler : IDogmaHandler
             ctx.PendingChoice = null;
             var picks = subset.ChosenCardIds.ToArray();
             if (picks.Length == 0) return false;
-            if (picks.Length == 1)
+            if (picks.Length == 1 || !Mechanics.OrderMatters(picks, id => g.Cards[id].Color))
             {
-                Mechanics.Tuck(g, target, picks[0]);
-                if (!g.IsGameOver) Mechanics.DrawAndScore(g, target, 7);
+                var distinctAges = new HashSet<int>();
+                foreach (var id in picks)
+                {
+                    distinctAges.Add(g.Cards[id].Age);
+                    Mechanics.Tuck(g, target, id);
+                    if (g.IsGameOver) return true;
+                }
+                foreach (var _ in distinctAges)
+                {
+                    if (g.IsGameOver) break;
+                    Mechanics.DrawAndScore(g, target, 7);
+                }
                 return true;
             }
-            // Multiple tucks — ask the player for tuck order. The order
+            // Multiple tucks share a color — ask the player for tuck order. The order
             // affects which card ends up on the bottom of which stack and
             // therefore which icons are revealed by future splays.
             ctx.HandlerState = picks;

@@ -30,7 +30,7 @@ public sealed class AntibioticsHandler : IDogmaHandler
             ctx.PendingChoice = null;
             var picks = subset.ChosenCardIds.ToArray();
             if (picks.Length == 0) return false;
-            if (picks.Length == 1)
+            if (picks.Length == 1 || !Mechanics.OrderMatters(picks, id => g.Cards[id].Age))
             {
                 ApplyReturnsAndDraws(g, target, picks);
                 return true;

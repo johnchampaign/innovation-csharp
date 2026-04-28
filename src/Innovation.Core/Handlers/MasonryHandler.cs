@@ -51,10 +51,17 @@ public sealed class MasonryHandler : IDogmaHandler
             var picks = req.ChosenCardIds.ToArray();
             if (picks.Length == 0) { ctx.HandlerState = null; return false; }
 
-            // Single-card meld is unambiguous — apply directly.
-            if (picks.Length == 1)
+            // Skip the order prompt when every meld lands on a different
+            // color stack — orderings are equivalent in that case.
+            if (picks.Length == 1 || !Mechanics.OrderMatters(picks, id => g.Cards[id].Color))
             {
-                Mechanics.Meld(g, target, picks[0]);
+                foreach (var id in picks)
+                {
+                    Mechanics.Meld(g, target, id);
+                    if (g.IsGameOver) { ctx.HandlerState = null; return true; }
+                }
+                if (picks.Length >= 4)
+                    AchievementRules.ClaimSpecial(g, target, SpecialAchievements.Monument);
                 ctx.HandlerState = null;
                 return true;
             }

@@ -71,11 +71,11 @@ public sealed class DemocracyReturnHandler : IDogmaHandler
                 state.Counts[target.Index] = 0;
                 return false;
             }
-            if (picks.Length == 1)
+            if (picks.Length == 1 || !Mechanics.OrderMatters(picks, id => g.Cards[id].Age))
             {
                 return ApplyReturnsAndEvaluate(g, target, picks, state);
             }
-            // 2+ picks — ask order.
+            // 2+ picks with at least one duplicate age — ask order.
             state.PendingPicks = picks;
             ctx.PendingChoice = new SelectCardOrderRequest
             {

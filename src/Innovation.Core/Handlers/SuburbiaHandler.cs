@@ -29,10 +29,18 @@ public sealed class SuburbiaHandler : IDogmaHandler
             ctx.PendingChoice = null;
             var picks = subset.ChosenCardIds.ToArray();
             if (picks.Length == 0) return false;
-            if (picks.Length == 1)
+            if (picks.Length == 1 || !Mechanics.OrderMatters(picks, id => g.Cards[id].Color))
             {
-                Mechanics.Tuck(g, target, picks[0]);
-                if (!g.IsGameOver) Mechanics.DrawAndScore(g, target, 1);
+                foreach (var id in picks)
+                {
+                    Mechanics.Tuck(g, target, id);
+                    if (g.IsGameOver) return true;
+                }
+                for (int i = 0; i < picks.Length; i++)
+                {
+                    if (g.IsGameOver) break;
+                    Mechanics.DrawAndScore(g, target, 1);
+                }
                 return true;
             }
             ctx.HandlerState = picks;

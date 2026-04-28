@@ -17,9 +17,9 @@ public sealed class RailroadReturnAndDrawHandler : IDogmaHandler
                 DrawThreeSixes(g, target);
                 return true;
             }
-            if (hand.Length == 1)
+            if (hand.Length == 1 || !Mechanics.OrderMatters(hand, id => g.Cards[id].Age))
             {
-                Mechanics.Return(g, target, hand[0]);
+                foreach (var id in hand) Mechanics.Return(g, target, id);
                 if (!g.IsGameOver) DrawThreeSixes(g, target);
                 return true;
             }

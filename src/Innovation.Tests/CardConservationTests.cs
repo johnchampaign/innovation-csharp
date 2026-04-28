@@ -135,9 +135,13 @@ public class CardConservationTests
     {
         var g = FreshDecks();
         var me = g.Players[0];
-        var castles = AllCards.Where(c =>
-            c.Top == Icon.Castle || c.Left == Icon.Castle ||
-            c.Middle == Icon.Castle || c.Right == Icon.Castle).Take(3).Select(c => c.Id).ToList();
+        // Pick 3 castle-bearing cards from 3 different colors so the order
+        // prompt is skipped (each meld lands on a distinct stack).
+        var castles = new[] { CardColor.Yellow, CardColor.Red, CardColor.Blue }
+            .Select(col => AllCards.First(c =>
+                c.Color == col && (c.Top == Icon.Castle || c.Left == Icon.Castle
+                                   || c.Middle == Icon.Castle || c.Right == Icon.Castle)).Id)
+            .ToList();
         MoveDeckToHand(g, me, castles);
 
         AssertAllCardsAccountedFor(g);
@@ -149,11 +153,7 @@ public class CardConservationTests
         subset.ChosenCardIds = castles;
         ctx.Paused = false;
 
-        Assert.False(h.Execute(g, me, ctx));
-        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
-        orderReq.ChosenOrder = orderReq.CardIds.ToList();
-        ctx.Paused = false;
-
+        // Distinct colors → no order prompt; melds happen inline.
         Assert.True(h.Execute(g, me, ctx));
         AssertAllCardsAccountedFor(g);
         Assert.Empty(me.Hand);
@@ -165,7 +165,10 @@ public class CardConservationTests
     {
         var g = FreshDecks();
         var me = g.Players[0];
-        var hand = AllCards.Where(c => c.Age == 1).Take(3).Select(c => c.Id).ToList();
+        // Three different colors → no order prompt.
+        var hand = new[] { CardColor.Yellow, CardColor.Red, CardColor.Blue }
+            .Select(col => AllCards.First(c => c.Age == 1 && c.Color == col).Id)
+            .ToList();
         MoveDeckToHand(g, me, hand);
 
         AssertAllCardsAccountedFor(g);
@@ -177,11 +180,7 @@ public class CardConservationTests
         subset.ChosenCardIds = hand;
         ctx.Paused = false;
 
-        Assert.False(h.Execute(g, me, ctx));
-        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
-        orderReq.ChosenOrder = orderReq.CardIds.ToList();
-        ctx.Paused = false;
-
+        // Distinct colors → no order prompt; tucks happen inline.
         Assert.True(h.Execute(g, me, ctx));
         AssertAllCardsAccountedFor(g);
         Assert.Empty(me.Hand);
@@ -193,6 +192,7 @@ public class CardConservationTests
     {
         var g = FreshDecks();
         var me = g.Players[0];
+        // Different ages → no order prompt.
         var hand = new[]
         {
             AllCards.First(c => c.Age == 1).Id,
@@ -207,11 +207,6 @@ public class CardConservationTests
         Assert.False(h.Execute(g, me, ctx));
         var subset = (SelectHandCardSubsetRequest)ctx.PendingChoice!;
         subset.ChosenCardIds = hand;
-        ctx.Paused = false;
-
-        Assert.False(h.Execute(g, me, ctx));
-        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
-        orderReq.ChosenOrder = orderReq.CardIds.ToList();
         ctx.Paused = false;
 
         Assert.True(h.Execute(g, me, ctx));

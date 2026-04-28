@@ -36,7 +36,7 @@ public sealed class PotteryReturnAndScoreHandler : IDogmaHandler
             ctx.PendingChoice = null;
             var picks = subset.ChosenCardIds.ToArray();
             if (picks.Length == 0) return false;
-            if (picks.Length == 1)
+            if (picks.Length == 1 || !Mechanics.OrderMatters(picks, id => g.Cards[id].Age))
             {
                 ApplyReturnsAndScore(g, target, picks);
                 return true;

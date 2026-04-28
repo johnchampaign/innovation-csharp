@@ -735,14 +735,10 @@ public class Age2HandlerTests
         req.ChosenCardIds = new[] { c1, c2 };
         ctx.Paused = false;
 
-        // 2 melded → order pick.
-        h.Execute(g, me, ctx);
-        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
-        orderReq.ChosenOrder = orderReq.CardIds.ToList();
-        ctx.Paused = false;
-
+        // Distinct colors → no order prompt; melds inline. No top red so no
+        // exchange offered.
         Assert.True(h.Execute(g, me, ctx));
-        Assert.Null(ctx.PendingChoice);   // no exchange prompt raised (no top red)
+        Assert.Null(ctx.PendingChoice);
     }
 
     [Fact]
@@ -769,15 +765,9 @@ public class Age2HandlerTests
         req.ChosenCardIds = new[] { red, other };
         ctx.Paused = false;
 
-        // 2 picks → meld-order request.
-        h.Execute(g, me, ctx);
-        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
-        // Meld red LAST so it ends up on top of red pile (the exchange leg
-        // requires a top red). Swap: put `other` first, `red` last.
-        orderReq.ChosenOrder = new[] { other, red };
-        ctx.Paused = false;
-
-        // Phase 1 resume triggers Phase 2 prompt.
+        // Distinct colors → no order prompt. Melds happen inline; the red
+        // ends up on top of the red pile (single card). Then the handler
+        // offers the exchange.
         h.Execute(g, me, ctx);
         var yn = (YesNoChoiceRequest)ctx.PendingChoice!;
         yn.ChosenYes = true;
@@ -809,12 +799,9 @@ public class Age2HandlerTests
         req.ChosenCardIds = new[] { red, other };
         ctx.Paused = false;
 
-        // 2 picks → meld-order request. Place red on top so the exchange leg fires.
-        h.Execute(g, me, ctx);
-        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
-        orderReq.ChosenOrder = new[] { other, red };
-        ctx.Paused = false;
-
+        // Distinct colors → no order prompt; melds inline. The melded red
+        // remains on top of the red pile (single card → red on top), and the
+        // handler then offers the exchange yes/no.
         h.Execute(g, me, ctx);
         var yn = (YesNoChoiceRequest)ctx.PendingChoice!;
         yn.ChosenYes = true;

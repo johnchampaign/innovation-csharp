@@ -395,4 +395,23 @@ public static class Mechanics
             return chosen;
         return input;
     }
+
+    /// <summary>
+    /// True iff at least two ids in <paramref name="ids"/> share a destination
+    /// key. The order of operations only matters when multiple cards land
+    /// in the same destination — for returns that's the age deck, for
+    /// melds/tucks that's the color stack. When every destination has at
+    /// most one card, all orderings are equivalent and the handler should
+    /// skip the player's order prompt entirely.
+    /// </summary>
+    public static bool OrderMatters<T>(IEnumerable<int> ids, Func<int, T> destination)
+        where T : notnull
+    {
+        var seen = new HashSet<T>();
+        foreach (var id in ids)
+        {
+            if (!seen.Add(destination(id))) return true;
+        }
+        return false;
+    }
 }

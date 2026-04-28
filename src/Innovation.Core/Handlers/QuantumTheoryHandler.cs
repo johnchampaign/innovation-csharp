@@ -34,7 +34,16 @@ public sealed class QuantumTheoryHandler : IDogmaHandler
                 Mechanics.Return(g, target, picks[0]);
                 return true;
             }
-            // 2 picks → ask for order, then return both, then bonus.
+            // 2 picks. If they're different ages the order is irrelevant.
+            if (!Mechanics.OrderMatters(picks, id => g.Cards[id].Age))
+            {
+                foreach (var id in picks) Mechanics.Return(g, target, id);
+                Mechanics.DrawFromAge(g, target, 10);
+                if (g.IsGameOver) return true;
+                Mechanics.DrawAndScore(g, target, 10);
+                return true;
+            }
+            // Same age — order matters; prompt.
             ctx.HandlerState = picks;
             ctx.PendingChoice = new SelectCardOrderRequest
             {

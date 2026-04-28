@@ -37,13 +37,17 @@ public sealed class EncyclopediaHandler : IDogmaHandler
 
             var toMeld = target.ScorePile.Where(id => g.Cards[id].Age == highest).ToArray();
             if (toMeld.Length == 0) return false;
-            if (toMeld.Length == 1)
+            if (toMeld.Length == 1 || !Mechanics.OrderMatters(toMeld, id => g.Cards[id].Color))
             {
-                MeldFromScore(g, target, toMeld[0]);
+                foreach (var id in toMeld)
+                {
+                    MeldFromScore(g, target, id);
+                    if (g.IsGameOver) return true;
+                }
                 return true;
             }
 
-            // Multiple cards — ask the player for the meld order.
+            // Two or more share a color — ask the player for the meld order.
             ctx.HandlerState = toMeld;
             ctx.PendingChoice = new SelectCardOrderRequest
             {

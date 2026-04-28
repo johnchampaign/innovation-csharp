@@ -36,9 +36,13 @@ public sealed class ReformationTuckHandler : IDogmaHandler
             ctx.PendingChoice = null;
             var picks = subset.ChosenCardIds.ToArray();
             if (picks.Length == 0) { ctx.HandlerState = null; return false; }
-            if (picks.Length == 1)
+            if (picks.Length == 1 || !Mechanics.OrderMatters(picks, id => g.Cards[id].Color))
             {
-                Mechanics.Tuck(g, target, picks[0]);
+                foreach (var id in picks)
+                {
+                    Mechanics.Tuck(g, target, id);
+                    if (g.IsGameOver) { ctx.HandlerState = null; return true; }
+                }
                 ctx.HandlerState = null;
                 return true;
             }

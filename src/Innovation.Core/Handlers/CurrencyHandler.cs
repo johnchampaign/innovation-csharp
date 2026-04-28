@@ -36,7 +36,10 @@ public sealed class CurrencyHandler : IDogmaHandler
             ctx.PendingChoice = null;
             var picks = subset.ChosenCardIds.ToArray();
             if (picks.Length == 0) return false;
-            if (picks.Length == 1)
+            // Returns to deck: order only matters when 2+ picks share an age
+            // (otherwise each ends up on a different deck and the orderings
+            // are equivalent).
+            if (picks.Length == 1 || !Mechanics.OrderMatters(picks, id => g.Cards[id].Age))
             {
                 ApplyReturnsAndScore(g, target, picks);
                 return true;

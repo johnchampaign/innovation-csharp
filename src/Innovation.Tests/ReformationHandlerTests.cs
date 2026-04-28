@@ -57,15 +57,10 @@ public class ReformationHandlerTests
         req.ChosenCardIds = new[] { invention, physics };
         ctx.Paused = false;
 
+        // Invention is Green and Physics is Blue — distinct color stacks
+        // mean tucks happen inline with no order prompt.
         bool second = h.Execute(g, me, ctx);
-        // Multi-tuck → handler now pauses for tuck-order pick.
-        Assert.False(second);
-        Assert.True(ctx.Paused);
-        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
-        orderReq.ChosenOrder = orderReq.CardIds.ToList();
-        ctx.Paused = false;
-
-        Assert.True(h.Execute(g, me, ctx));
+        Assert.True(second);
         Assert.Empty(me.Hand);
         Assert.Contains(invention, me.Stack(g.Cards[invention].Color).Cards);
         Assert.Contains(physics, me.Stack(g.Cards[physics].Color).Cards);
@@ -96,12 +91,7 @@ public class ReformationHandlerTests
         req.ChosenCardIds = new[] { invention, physics };
         ctx.Paused = false;
 
-        // Multi-tuck → handler now pauses for tuck-order pick.
-        Assert.False(h.Execute(g, me, ctx));
-        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
-        orderReq.ChosenOrder = orderReq.CardIds.ToList();
-        ctx.Paused = false;
-
+        // Invention/Physics are distinct colors → no order prompt.
         Assert.True(h.Execute(g, me, ctx));
         Assert.Empty(me.Hand);
         Assert.Contains(invention, me.Stack(g.Cards[invention].Color).Cards);
