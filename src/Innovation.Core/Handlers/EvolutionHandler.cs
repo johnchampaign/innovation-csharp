@@ -55,9 +55,12 @@ public sealed class EvolutionHandler : IDogmaHandler
                 ctx.HandlerState = null;
                 if (target.ScorePile.Count == 0) return false;
                 int highestAge = target.ScorePile.Max(id => g.Cards[id].Age);
-                int drawAge = Math.Min(highestAge + 1, 10);
-                int drawn = Mechanics.DrawFromAge(g, target, drawAge);
-                return drawn >= 0;
+                // Don't cap at 10. If the highest is 10 the player draws
+                // "an 11" — Mechanics.DrawFromAge handles age>10 as the
+                // game-ending win cascade. Capping at 10 was a bug that
+                // silently denied the player their winning draw.
+                int drawn = Mechanics.DrawFromAge(g, target, highestAge + 1);
+                return drawn >= 0 || g.IsGameOver;
             }
         }
 
