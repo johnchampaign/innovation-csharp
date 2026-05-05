@@ -5,8 +5,9 @@ namespace Innovation.Core.Handlers;
 /// top non-purple card with a [Crown] from your board to my board! If
 /// you do, draw and meld a 4!"
 ///
-/// Target picks the color. The activator (not the target) performs the
-/// draw-and-meld 4 if a card actually moved.
+/// Target picks the color. "If you do, draw and meld a 4" — the
+/// reward goes to the target (the demand defender) per the standard
+/// demand-text rule, not the activator.
 /// </summary>
 public sealed class EnterpriseDemandHandler : IDogmaHandler
 {

@@ -5,8 +5,10 @@ namespace Innovation.Core.Handlers;
 /// top non-green card with a [Factory] from your board to my score pile!
 /// If you do, draw and meld an 8."
 ///
-/// The activator's draw-and-meld fires only when a transfer happened.
-/// Ties are broken by the target (they pick the color).
+/// "If you do, draw and meld an 8" — the reward goes to the target
+/// (the demand defender), not the activator. Fires only when a card
+/// actually transferred. Ties are broken by the target (they pick the
+/// color).
 /// </summary>
 public sealed class CorporationsDemandHandler : IDogmaHandler
 {
