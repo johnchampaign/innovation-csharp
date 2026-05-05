@@ -5,14 +5,17 @@ namespace Innovation.Core.Handlers;
 /// non-green card with a [Leaf] from your board to my board, and then
 /// transfer a top card without a [Leaf] from my board to your board."
 ///
-/// Two sequential transfers:
-///   • Leg 1 — target picks a non-green color whose top card has a Leaf.
-///   • Leg 2 — activator picks a color whose top card has no Leaf.
-///     Conditional on leg 1 happening.
+/// Two sequential transfers, BOTH chosen by the demand target:
+///   • Leg 1 — target picks a non-green color whose top card has a Leaf
+///     and gives it to the activator.
+///   • Leg 2 — target picks a color from the ACTIVATOR'S board whose top
+///     card has no Leaf, and takes it for themselves. Conditional on
+///     leg 1 happening.
 ///
-/// Per the rulebook, each leg's chooser is the owner giving the card up.
-/// If a leg has no eligible color, that leg is skipped (but the demand
-/// still "counted" if leg 1 moved something).
+/// Per VB6 (main.frm 7849, 4880-4889): the target reaches across the
+/// table and grabs a non-leaf card of their choice from the activator.
+/// The activator doesn't pick anything. If a leg has no eligible color
+/// it's skipped, but the demand still "counted" if leg 1 moved something.
 /// </summary>
 public sealed class CompassDemandHandler : IDogmaHandler
 {
@@ -68,13 +71,16 @@ public sealed class CompassDemandHandler : IDogmaHandler
             }
             if (eligible2.Count == 0) return true;
 
+            // Per VB6 (main.frm 7849, 4880-4889): the demand target picks
+            // BOTH legs — they reach across and grab a non-leaf card of
+            // their choice from the activator's board. The activator
+            // doesn't make any choice.
             ctx.HandlerState = "leg2";
             ctx.PendingChoice = new SelectColorRequest
             {
-                Prompt = $"Compass: player {ctx.ActivatingPlayerIndex + 1}, "
-                       + $"transfer a top card without a [Leaf] from your board "
-                       + $"to player {target.Index + 1}'s board.",
-                PlayerIndex = activator.Index,
+                Prompt = $"Compass: choose a top card without a [Leaf] from "
+                       + $"player {ctx.ActivatingPlayerIndex + 1}'s board to take.",
+                PlayerIndex = target.Index,
                 EligibleColors = eligible2,
             };
             ctx.Paused = true;
