@@ -201,6 +201,12 @@ public class DrawAndScoreLandingTests
         req.ChosenCardIds = new[] { a, b, c };
         ctx.Paused = false;
 
+        // Stage 3: same-age picks → order prompt for the deck.
+        Assert.False(h.Execute(g, me, ctx));
+        var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+        orderReq.ChosenOrder = orderReq.CardIds.ToList();
+        ctx.Paused = false;
+
         Assert.True(h.Execute(g, me, ctx));
 
         // Hand emptied (3 returned), nothing in hand from the draw-and-meld.

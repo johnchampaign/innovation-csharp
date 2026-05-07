@@ -34,6 +34,21 @@ public sealed class ToolsReturnThreeForMeldHandler : IDogmaHandler
             return false;
         }
 
+        // Awaiting order resolution: HandlerState carries the int[] picks.
+        if (ctx.HandlerState is int[] orderPicks)
+        {
+            var orderReq = (SelectCardOrderRequest)ctx.PendingChoice!;
+            ctx.PendingChoice = null;
+            ctx.HandlerState = null;
+            var ordered = Mechanics.ValidateOrder(orderReq.ChosenOrder, orderPicks);
+            for (int i = ordered.Count - 1; i >= 0; i--)
+                Mechanics.Return(g, target, ordered[i]);
+            int drawn1 = Mechanics.DrawFromAge(g, target, 3);
+            if (drawn1 < 0 || g.IsGameOver) return true;
+            Mechanics.Meld(g, target, drawn1);
+            return true;
+        }
+
         var step = (Step)ctx.HandlerState!;
 
         if (step == Step.AskedYesNo)
@@ -64,16 +79,31 @@ public sealed class ToolsReturnThreeForMeldHandler : IDogmaHandler
         // Step.AskedSubset — apply the returns, then draw-and-meld a 3.
         var req = (SelectHandCardSubsetRequest)ctx.PendingChoice!;
         ctx.PendingChoice = null;
-        ctx.HandlerState = null;
 
-        if (req.ChosenCardIds.Count != 3) return false;   // defensive
+        if (req.ChosenCardIds.Count != 3) { ctx.HandlerState = null; return false; }
+        var picks = req.ChosenCardIds.ToArray();
 
-        foreach (var id in req.ChosenCardIds)
-            Mechanics.Return(g, target, id);
+        // If the three picks are all distinct ages, no return-order matters
+        // (each goes to a different deck). Otherwise prompt.
+        if (!Mechanics.OrderMatters(picks, id => g.Cards[id].Age))
+        {
+            ctx.HandlerState = null;
+            foreach (var id in picks) Mechanics.Return(g, target, id);
+            int drawn = Mechanics.DrawFromAge(g, target, 3);
+            if (drawn < 0 || g.IsGameOver) return true;
+            Mechanics.Meld(g, target, drawn);
+            return true;
+        }
 
-        int drawn = Mechanics.DrawFromAge(g, target, 3);
-        if (drawn < 0 || g.IsGameOver) return true;
-        Mechanics.Meld(g, target, drawn);
-        return true;
+        ctx.HandlerState = picks;
+        ctx.PendingChoice = new SelectCardOrderRequest
+        {
+            Prompt = "Tools: choose the return order for the three cards.",
+            PlayerIndex = target.Index,
+            Action = "return",
+            CardIds = picks,
+        };
+        ctx.Paused = true;
+        return false;
     }
 }

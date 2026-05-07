@@ -102,6 +102,12 @@ public class ToolsAndClothingHandlerTests
         subset.ChosenCardIds = hand;
         ctx.Paused = false;
 
+        // Step 3: all three are age 1 → return-order prompt fires.
+        h.Execute(g, g.Players[0], ctx);
+        var orderReq = Assert.IsType<SelectCardOrderRequest>(ctx.PendingChoice);
+        orderReq.ChosenOrder = orderReq.CardIds.ToList();
+        ctx.Paused = false;
+
         bool progressed = h.Execute(g, g.Players[0], ctx);
 
         Assert.True(progressed);
