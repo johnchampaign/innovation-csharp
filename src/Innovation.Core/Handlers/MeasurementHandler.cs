@@ -40,11 +40,15 @@ public sealed class MeasurementHandler : IDogmaHandler
             Mechanics.Return(g, target, rid);
             if (g.IsGameOver) return true;
 
+            // Any color with ≥2 cards is eligible. Already-right piles
+            // count too: the splay itself is a no-op but the player may
+            // pick the color anyway to drive the draw size off that pile's
+            // count (the rules don't restrict the pick to colors that
+            // would actually re-splay).
             var eligible = new List<CardColor>();
             foreach (CardColor c in Enum.GetValues<CardColor>())
             {
-                var s = target.Stack(c);
-                if (s.Count >= 2 && s.Splay != Splay.Right) eligible.Add(c);
+                if (target.Stack(c).Count >= 2) eligible.Add(c);
             }
             if (eligible.Count == 0) return true;
 
@@ -67,7 +71,8 @@ public sealed class MeasurementHandler : IDogmaHandler
         ctx.HandlerState = null;
         if (creq.ChosenColor is not CardColor color) return true;
 
-        if (!Mechanics.Splay(g, target, color, Splay.Right)) return true;
+        // Apply the splay (no-op if already right — the draw still fires).
+        Mechanics.Splay(g, target, color, Splay.Right);
         if (g.IsGameOver) return true;
         int count = target.Stack(color).Count;
         Mechanics.DrawFromAge(g, target, Math.Clamp(count, 1, 10));
