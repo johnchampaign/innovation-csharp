@@ -123,21 +123,35 @@ public sealed class GreedyController : IPlayerController
 
     // In-dogma prompts. A full one-ply search over choice resolutions is
     // Phase 5.4+ work (needs a cloneable DogmaContext + TurnManager). Until
-    // then, local heuristics: assume any prompt the handler bothered to
-    // raise is offering a benefit when accepted, so ACCEPT, and pick the
-    // choice that usually maxes value — highest-age hand card (biggest
-    // score off Agriculture / Mathematics / Pottery), highest-age score
-    // card (biggest gain off Optics-style pulls), every color that splays
-    // right, and yes to every optional yes/no.
+    // then, local heuristics:
+    //   • Hand-card picks default to LOWEST-age (give up the least valuable
+    //     card). Almost every hand-card prompt is a "lose this card" event
+    //     — return to deck, transfer to opponent, tuck under stack — so
+    //     preserving high-age hand cards is the right play. (Earlier
+    //     versions defaulted to highest-age on the mistaken theory that
+    //     "high-age return → high-age score," but Pottery / Currency /
+    //     Democracy reward by COUNT, not by age of card returned, so
+    //     burning your best cards was strictly worse than giving up your
+    //     worst.)
+    //   • Hand-card SUBSET picks default to MaxCount of the lowest-age
+    //     cards — same logic. The exception is Masonry, which melds the
+    //     subset onto the player's board; for that we want HIGHEST-age
+    //     castles. Detected by prompt prefix.
+    //   • Yes/no defaults to true (handlers raise these for opt-in
+    //     benefits); Color picks prefer tallest stack (most splay value);
+    //     Score-card picks branch on whether self is the requester (give
+    //     up lowest if defending a demand, take highest otherwise).
     public int? ChooseHandCard(GameState g, PlayerState self, SelectHandCardRequest req)
     {
         if (req.EligibleCardIds.Count == 0) return null;
+        // Lowest-age: minimise the cost of whatever the handler does with
+        // this card.
         int best = req.EligibleCardIds[0];
         int bestAge = g.Cards[best].Age;
         foreach (var id in req.EligibleCardIds)
         {
             int age = g.Cards[id].Age;
-            if (age > bestAge) { bestAge = age; best = id; }
+            if (age < bestAge) { bestAge = age; best = id; }
         }
         return best;
     }
@@ -147,10 +161,15 @@ public sealed class GreedyController : IPlayerController
         int maxTakeable = Math.Min(req.MaxCount, req.EligibleCardIds.Count);
         int minTakeable = Math.Min(req.MinCount, maxTakeable);
         if (maxTakeable == 0) return Array.Empty<int>();
-        // Greedy default: take MaxCount highest-age cards. Works for
-        // Pottery (more returns = higher-age score), Democracy (more
-        // returns = the 8-reward), Masonry (castles = Empire progress).
-        var ordered = req.EligibleCardIds.OrderByDescending(id => g.Cards[id].Age).ToList();
+
+        // Masonry melds the subset onto the board; want the BEST castles,
+        // not the worst. Detected by prompt prefix so we don't have to
+        // thread a flag through the choice infrastructure.
+        bool wantHigh = req.Prompt?.StartsWith("Masonry:") == true;
+
+        var ordered = wantHigh
+            ? req.EligibleCardIds.OrderByDescending(id => g.Cards[id].Age).ToList()
+            : req.EligibleCardIds.OrderBy(id => g.Cards[id].Age).ToList();
         int take = Math.Max(minTakeable, maxTakeable);
         return ordered.Take(take).ToList();
     }
