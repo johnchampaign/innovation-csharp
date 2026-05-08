@@ -22,8 +22,14 @@ namespace Innovation.Core.Players;
 public sealed class GreedyController : IPlayerController
 {
     private readonly RandomController _rollout;
+    private readonly PessimisticOpponentController _pessimisticOpponent;
 
-    public GreedyController(Random rng) => _rollout = new RandomController(rng);
+    public GreedyController(Random rng)
+    {
+        _rollout = new RandomController(rng);
+        // Seed pessimistic opponent off the same rng for determinism.
+        _pessimisticOpponent = new PessimisticOpponentController(new Random(rng.Next()));
+    }
     public GreedyController(int seed) : this(new Random(seed)) { }
     public GreedyController() : this(new Random()) { }
 
@@ -90,10 +96,17 @@ public sealed class GreedyController : IPlayerController
             return long.MinValue;
         }
 
-        // Every seat in the trial uses the rollout policy — the greedy
-        // controller does not recurse into deeper search.
+        // Trial seats: self uses the random rollout (keeps in-dogma choices
+        // varied so the activator's own picks aren't degenerate). Opponents
+        // use a PESSIMISTIC controller that declines optional shares —
+        // models a worst-case opponent who refuses to bail out the
+        // activator's share-bonus play. Without this, random opponents in
+        // the trial flip 50/50 on subset prompts, overestimating the
+        // activator's payoff for "share-baiting" cards like Currency,
+        // Calendar, Domestication, etc.
         var rollouts = new IPlayerController[clone.Players.Length];
-        for (int i = 0; i < rollouts.Length; i++) rollouts[i] = _rollout;
+        for (int i = 0; i < rollouts.Length; i++)
+            rollouts[i] = (i == selfIndex) ? (IPlayerController)_rollout : _pessimisticOpponent;
 
         var runner = new GameRunner(clone, rollouts);
         try
