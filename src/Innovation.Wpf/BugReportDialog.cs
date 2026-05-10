@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -15,37 +13,38 @@ using Innovation.Core;
 namespace Innovation.Wpf;
 
 /// <summary>
-/// Modal dialog that helps the user file a bug as a GitHub issue. The user
-/// fills in what happened and (optionally) what they expected; the dialog
-/// constructs an issue URL with their description, the most recent state-code
-/// snapshot, the trailing log lines, and the build version, then opens the
-/// pre-filled new-issue page in the default browser. The user reviews and
-/// submits via their own GitHub account — no tokens or backends.
+/// Modal dialog for filing a bug report directly to GitHub via a service
+/// token. The user describes what happened; on Submit, the dialog uploads
+/// the screenshot to the repo, files an issue with the description + log
+/// snippet + state code + screenshot URL, and shows the resulting issue
+/// link. Users don't need GitHub accounts.
+///
+/// Token comes from <see cref="BugReportSubmitter.GetEmbeddedToken"/>;
+/// builds without a token get a "submission unavailable" message and the
+/// Submit button is disabled.
 /// </summary>
 public sealed class BugReportDialog : Window
 {
-    private const string IssueUrlBase =
-        "https://github.com/johnchampaign/innovation-csharp/issues/new";
-
-    /// <summary>How many trailing log lines to attach by default.</summary>
     private const int RecentLogLines = 40;
-
-    /// <summary>Cap the body length so GitHub's URL-prefill works.</summary>
-    private const int MaxBodyLength = 6000;
 
     private readonly TextBox _whatHappened;
     private readonly TextBox _whatExpected;
     private readonly CheckBox _includeLog;
     private readonly CheckBox _includeState;
     private readonly CheckBox _includeScreenshot;
+    private readonly TextBlock _statusLine;
+    private readonly Button _submitButton;
     private readonly BitmapSource? _screenshot;
+    private readonly GameState _state;
 
     public BugReportDialog(GameState state, BitmapSource? screenshot = null)
     {
+        _state = state;
         _screenshot = screenshot;
+
         Title = "Report a bug";
         Width = 560;
-        Height = 540;
+        Height = 560;
         ResizeMode = ResizeMode.CanResize;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = new SolidColorBrush(Color.FromRgb(0xF3, 0xEF, 0xD3));
@@ -54,26 +53,37 @@ public sealed class BugReportDialog : Window
 
         var root = new DockPanel { Margin = new Thickness(12) };
 
-        // Header explaining what happens on submit.
         var header = new TextBlock
         {
-            Text = "Submit will open a pre-filled issue page in your browser. "
-                 + "Review it (you can edit anything), then click GitHub's "
-                 + "“Submit new issue” button to file it. You'll need to be "
-                 + "signed in to GitHub.",
+            Text = "Describe the bug. On Submit, the report is filed automatically — "
+                 + "you don't need a GitHub account.",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 0, 0, 10),
         };
         DockPanel.SetDock(header, Dock.Top);
         root.Children.Add(header);
 
-        // Bottom buttons.
+        // Bottom row: status line + buttons.
+        var bottom = new Grid();
+        bottom.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        bottom.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        DockPanel.SetDock(bottom, Dock.Bottom);
+
+        _statusLine = new TextBlock
+        {
+            VerticalAlignment = VerticalAlignment.Center,
+            Foreground = Brushes.DimGray,
+            TextWrapping = TextWrapping.Wrap,
+        };
+        Grid.SetColumn(_statusLine, 0);
+        bottom.Children.Add(_statusLine);
+
         var btnRow = new StackPanel
         {
             Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Right,
         };
-        var ok = new Button
+        _submitButton = new Button
         {
             Content = "Submit",
             Width = 100,
@@ -81,26 +91,25 @@ public sealed class BugReportDialog : Window
             Padding = new Thickness(8, 4, 8, 4),
             IsDefault = true,
         };
-        ok.Click += (_, _) => OnSubmit(state);
+        _submitButton.Click += async (_, _) => await OnSubmitAsync();
         var cancel = new Button
         {
-            Content = "Cancel",
+            Content = "Close",
             Width = 80,
             Padding = new Thickness(8, 4, 8, 4),
             IsCancel = true,
         };
-        btnRow.Children.Add(ok);
+        btnRow.Children.Add(_submitButton);
         btnRow.Children.Add(cancel);
-        DockPanel.SetDock(btnRow, Dock.Bottom);
-        root.Children.Add(btnRow);
+        Grid.SetColumn(btnRow, 1);
+        bottom.Children.Add(btnRow);
+        root.Children.Add(bottom);
 
-        // Form content fills the rest.
         var form = new Grid();
         for (int i = 0; i < 9; i++)
             form.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         form.RowDefinitions[1].Height = new GridLength(1, GridUnitType.Star);
         form.RowDefinitions[3].Height = new GridLength(1, GridUnitType.Star);
-        DockPanel.SetDock(form, Dock.Top);
 
         AddRow(form, 0, "What happened? (required)");
         _whatHappened = new TextBox
@@ -126,7 +135,7 @@ public sealed class BugReportDialog : Window
 
         _includeState = new CheckBox
         {
-            Content = "Include the most recent turn-boundary state code (recommended — easier to reproduce)",
+            Content = "Include the most recent turn-boundary state code (recommended)",
             IsChecked = true,
             Margin = new Thickness(0, 0, 0, 4),
         };
@@ -144,31 +153,39 @@ public sealed class BugReportDialog : Window
 
         _includeScreenshot = new CheckBox
         {
-            Content = "Attach a screenshot (auto-copied to clipboard; you'll Ctrl+V it into the issue body)",
+            Content = "Attach a screenshot (auto-uploaded; no action needed from you)",
             IsChecked = _screenshot != null,
             IsEnabled = _screenshot != null,
             Margin = new Thickness(0, 0, 0, 4),
             ToolTip = _screenshot != null
-                ? "The screenshot was captured when you opened this dialog. "
-                + "On submit it'll be on your clipboard — paste it into "
-                + "GitHub's body field with Ctrl+V."
-                : "No screenshot captured (capture failed or wasn't supported in this build).",
+                ? "The screenshot was captured the moment you opened this dialog."
+                : "No screenshot captured (rendering failed in this build).",
         };
         Grid.SetRow(_includeScreenshot, 6);
         form.Children.Add(_includeScreenshot);
 
         var footnote = new TextBlock
         {
-            Text = "Your nickname appears in the log. Don't include sensitive info.",
+            Text = "Reports are filed publicly on GitHub. Your nickname appears in the log "
+                 + "and on the screenshot. Don't include sensitive info.",
             FontStyle = FontStyles.Italic,
             Foreground = Brushes.DimGray,
             Margin = new Thickness(0, 4, 0, 8),
+            TextWrapping = TextWrapping.Wrap,
         };
         Grid.SetRow(footnote, 7);
         form.Children.Add(footnote);
 
         root.Children.Add(form);
         Content = root;
+
+        // If no token is baked in, lock the form down with an explanation.
+        if (BugReportSubmitter.GetEmbeddedToken() is null)
+        {
+            _submitButton.IsEnabled = false;
+            _statusLine.Text = "Bug reporting unavailable in this build (no service token).";
+            _statusLine.Foreground = Brushes.DarkRed;
+        }
     }
 
     private static void AddRow(Grid g, int row, string label)
@@ -183,7 +200,7 @@ public sealed class BugReportDialog : Window
         g.Children.Add(t);
     }
 
-    private void OnSubmit(GameState state)
+    private async Task OnSubmitAsync()
     {
         var what = _whatHappened.Text?.Trim() ?? "";
         if (string.IsNullOrWhiteSpace(what))
@@ -194,57 +211,72 @@ public sealed class BugReportDialog : Window
             return;
         }
 
-        string title = TruncateForTitle(what);
-        bool wantScreenshot = _includeScreenshot.IsChecked == true && _screenshot != null;
-        string body = BuildBody(what, _whatExpected.Text?.Trim() ?? "",
-            state, _includeState.IsChecked == true, _includeLog.IsChecked == true,
-            wantScreenshot);
-
-        // Place the screenshot on the clipboard NOW so the user can Ctrl+V
-        // it into GitHub's body field once the browser opens.
-        if (wantScreenshot)
+        string? token = BugReportSubmitter.GetEmbeddedToken();
+        if (token is null)
         {
-            try { Clipboard.SetImage(_screenshot!); }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this,
-                    $"Couldn't copy the screenshot to the clipboard: {ex.Message}\n\n"
-                  + "The issue page will still open without the screenshot.",
-                    "Bug report", MessageBoxButton.OK, MessageBoxImage.Information);
-                wantScreenshot = false;
-                body = BuildBody(what, _whatExpected.Text?.Trim() ?? "",
-                    state, _includeState.IsChecked == true, _includeLog.IsChecked == true,
-                    wantScreenshot: false);
-            }
+            // Defensive — the constructor already disabled Submit in this case.
+            return;
         }
 
-        // Construct the GitHub new-issue URL. Title and body are URL-encoded.
-        // GitHub also accepts a "labels" parameter pre-tagging the issue.
-        string url = $"{IssueUrlBase}?title={WebUtility.UrlEncode(title)}"
-                   + $"&body={WebUtility.UrlEncode(body)}"
-                   + $"&labels=bug,from-game";
+        _submitButton.IsEnabled = false;
+        SetStatus("Submitting...", Brushes.DimGray);
 
         try
         {
-            Process.Start(new ProcessStartInfo
+            var submitter = new BugReportSubmitter(token);
+            string? screenshotUrl = null;
+
+            if (_includeScreenshot.IsChecked == true && _screenshot != null)
             {
-                FileName = url,
-                UseShellExecute = true,
-            });
+                SetStatus("Uploading screenshot...", Brushes.DimGray);
+                var png = BugReportSubmitter.EncodePng(_screenshot);
+                string filename = $"{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid().ToString("N").Substring(0, 8)}.png";
+                screenshotUrl = await submitter.UploadScreenshotAsync(png, filename).ConfigureAwait(true);
+                if (screenshotUrl is null)
+                {
+                    SetStatus("Screenshot upload failed; filing the report without it.", Brushes.DarkOrange);
+                }
+            }
+
+            SetStatus("Filing the issue...", Brushes.DimGray);
+            string title = TruncateForTitle(what);
+            string body = BuildBody(what, _whatExpected.Text?.Trim() ?? "",
+                _state, _includeState.IsChecked == true, _includeLog.IsChecked == true,
+                screenshotUrl);
+
+            string? issueUrl = await submitter.CreateIssueAsync(
+                title, body, labels: new[] { "bug", "from-game" }).ConfigureAwait(true);
+
+            if (issueUrl is null)
+            {
+                SetStatus("Couldn't file the issue. Try again, or contact the developer.", Brushes.DarkRed);
+                _submitButton.IsEnabled = true;
+                return;
+            }
+
+            // Success — show the URL and close the dialog on confirmation.
+            _statusLine.Text = "";
+            var result = MessageBox.Show(this,
+                $"Bug report filed!\n\n{issueUrl}\n\nThe link is on your clipboard if you'd like to follow it.",
+                "Bug report submitted", MessageBoxButton.OK, MessageBoxImage.Information);
+            try { Clipboard.SetText(issueUrl); } catch { /* clipboard busy — fine */ }
             DialogResult = true;
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this,
-                $"Couldn't open the browser:\n{ex.Message}\n\nYou can paste this URL manually:\n{url}",
-                "Bug report", MessageBoxButton.OK, MessageBoxImage.Warning);
+            SetStatus($"Submission failed: {ex.Message}", Brushes.DarkRed);
+            _submitButton.IsEnabled = true;
         }
+    }
+
+    private void SetStatus(string text, Brush color)
+    {
+        _statusLine.Text = text;
+        _statusLine.Foreground = color;
     }
 
     private static string TruncateForTitle(string what)
     {
-        // Use the first non-empty line, capped at ~80 chars, no trailing
-        // punctuation cleanup beyond a basic ellipsis.
         var firstLine = what.Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .FirstOrDefault()?.Trim() ?? "Bug report";
         if (firstLine.Length > 80) firstLine = firstLine.Substring(0, 77) + "…";
@@ -253,7 +285,7 @@ public sealed class BugReportDialog : Window
 
     private static string BuildBody(string what, string expected, GameState state,
                                     bool includeState, bool includeLog,
-                                    bool wantScreenshot)
+                                    string? screenshotUrl)
     {
         var sb = new StringBuilder();
         sb.AppendLine("**What happened**");
@@ -261,19 +293,19 @@ public sealed class BugReportDialog : Window
         sb.AppendLine(what);
         sb.AppendLine();
 
-        if (wantScreenshot)
-        {
-            sb.AppendLine("**Screenshot**");
-            sb.AppendLine();
-            sb.AppendLine("📷 *Paste your screenshot here (Ctrl+V) — it's already on your clipboard.*");
-            sb.AppendLine();
-        }
-
         if (!string.IsNullOrWhiteSpace(expected))
         {
             sb.AppendLine("**What I expected**");
             sb.AppendLine();
             sb.AppendLine(expected);
+            sb.AppendLine();
+        }
+
+        if (screenshotUrl is not null)
+        {
+            sb.AppendLine("**Screenshot**");
+            sb.AppendLine();
+            sb.AppendLine($"![screenshot]({screenshotUrl})");
             sb.AppendLine();
         }
 
@@ -298,9 +330,9 @@ public sealed class BugReportDialog : Window
                 sb.AppendLine();
                 if (state.Phase == GamePhase.Dogma)
                 {
-                    sb.AppendLine("> ⚠️ This snapshot was taken mid-dogma. The codec doesn't "
-                                + "preserve in-flight resolution state, so loading it won't "
-                                + "reproduce the exact moment — but it pins down the position.");
+                    sb.AppendLine("> ⚠️ Captured mid-dogma. The codec doesn't preserve "
+                                + "in-flight resolution state — loading it won't reproduce "
+                                + "the exact moment, only the position.");
                     sb.AppendLine();
                 }
             }
@@ -324,14 +356,7 @@ public sealed class BugReportDialog : Window
             }
         }
 
-        var body = sb.ToString();
-        if (body.Length > MaxBodyLength)
-        {
-            // Truncate but keep the front (description + state code).
-            body = body.Substring(0, MaxBodyLength - 100)
-                 + $"\n\n... (truncated {body.Length - (MaxBodyLength - 100)} chars to fit GitHub's URL-prefill limit)";
-        }
-        return body;
+        return sb.ToString();
     }
 
     private static string ReadTailOfLog(int lines)

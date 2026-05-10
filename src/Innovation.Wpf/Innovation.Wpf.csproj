@@ -10,7 +10,7 @@
     <!-- Version string surfaces in the Bug Report dialog so reports are
          tagged with the build that produced them. Bump when cutting a
          new release. -->
-    <Version>0.1.16</Version>
+    <Version>0.1.17</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +23,20 @@
        CardVisuals via pack://application URIs. -->
   <ItemGroup>
     <Resource Include="Resources\*.jpg" />
+  </ItemGroup>
+
+  <!-- Bug-report service token. Set BUGREPORT_GITHUB_TOKEN before
+       `dotnet publish` for releases; the token is embedded in the
+       binary as an AssemblyMetadata attribute and read at runtime by
+       BugReportSubmitter. Source builds without the env var set get
+       an empty string and the dialog shows a "submit unavailable"
+       message — which is the right behaviour, since dev builds
+       shouldn't punch into the production token's quota. -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>BugReportToken</_Parameter1>
+      <_Parameter2>$(BUGREPORT_GITHUB_TOKEN)</_Parameter2>
+    </AssemblyAttribute>
   </ItemGroup>
 
 </Project>
