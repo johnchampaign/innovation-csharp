@@ -9,6 +9,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Innovation.Core;
 
 namespace Innovation.Wpf;
@@ -36,9 +37,12 @@ public sealed class BugReportDialog : Window
     private readonly TextBox _whatExpected;
     private readonly CheckBox _includeLog;
     private readonly CheckBox _includeState;
+    private readonly CheckBox _includeScreenshot;
+    private readonly BitmapSource? _screenshot;
 
-    public BugReportDialog(GameState state)
+    public BugReportDialog(GameState state, BitmapSource? screenshot = null)
     {
+        _screenshot = screenshot;
         Title = "Report a bug";
         Width = 560;
         Height = 540;
@@ -92,7 +96,7 @@ public sealed class BugReportDialog : Window
 
         // Form content fills the rest.
         var form = new Grid();
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 9; i++)
             form.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         form.RowDefinitions[1].Height = new GridLength(1, GridUnitType.Star);
         form.RowDefinitions[3].Height = new GridLength(1, GridUnitType.Star);
@@ -138,6 +142,21 @@ public sealed class BugReportDialog : Window
         Grid.SetRow(_includeLog, 5);
         form.Children.Add(_includeLog);
 
+        _includeScreenshot = new CheckBox
+        {
+            Content = "Attach a screenshot (auto-copied to clipboard; you'll Ctrl+V it into the issue body)",
+            IsChecked = _screenshot != null,
+            IsEnabled = _screenshot != null,
+            Margin = new Thickness(0, 0, 0, 4),
+            ToolTip = _screenshot != null
+                ? "The screenshot was captured when you opened this dialog. "
+                + "On submit it'll be on your clipboard — paste it into "
+                + "GitHub's body field with Ctrl+V."
+                : "No screenshot captured (capture failed or wasn't supported in this build).",
+        };
+        Grid.SetRow(_includeScreenshot, 6);
+        form.Children.Add(_includeScreenshot);
+
         var footnote = new TextBlock
         {
             Text = "Your nickname appears in the log. Don't include sensitive info.",
@@ -145,7 +164,7 @@ public sealed class BugReportDialog : Window
             Foreground = Brushes.DimGray,
             Margin = new Thickness(0, 4, 0, 8),
         };
-        Grid.SetRow(footnote, 6);
+        Grid.SetRow(footnote, 7);
         form.Children.Add(footnote);
 
         root.Children.Add(form);
@@ -176,8 +195,28 @@ public sealed class BugReportDialog : Window
         }
 
         string title = TruncateForTitle(what);
+        bool wantScreenshot = _includeScreenshot.IsChecked == true && _screenshot != null;
         string body = BuildBody(what, _whatExpected.Text?.Trim() ?? "",
-            state, _includeState.IsChecked == true, _includeLog.IsChecked == true);
+            state, _includeState.IsChecked == true, _includeLog.IsChecked == true,
+            wantScreenshot);
+
+        // Place the screenshot on the clipboard NOW so the user can Ctrl+V
+        // it into GitHub's body field once the browser opens.
+        if (wantScreenshot)
+        {
+            try { Clipboard.SetImage(_screenshot!); }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this,
+                    $"Couldn't copy the screenshot to the clipboard: {ex.Message}\n\n"
+                  + "The issue page will still open without the screenshot.",
+                    "Bug report", MessageBoxButton.OK, MessageBoxImage.Information);
+                wantScreenshot = false;
+                body = BuildBody(what, _whatExpected.Text?.Trim() ?? "",
+                    state, _includeState.IsChecked == true, _includeLog.IsChecked == true,
+                    wantScreenshot: false);
+            }
+        }
 
         // Construct the GitHub new-issue URL. Title and body are URL-encoded.
         // GitHub also accepts a "labels" parameter pre-tagging the issue.
@@ -213,13 +252,22 @@ public sealed class BugReportDialog : Window
     }
 
     private static string BuildBody(string what, string expected, GameState state,
-                                    bool includeState, bool includeLog)
+                                    bool includeState, bool includeLog,
+                                    bool wantScreenshot)
     {
         var sb = new StringBuilder();
         sb.AppendLine("**What happened**");
         sb.AppendLine();
         sb.AppendLine(what);
         sb.AppendLine();
+
+        if (wantScreenshot)
+        {
+            sb.AppendLine("**Screenshot**");
+            sb.AppendLine();
+            sb.AppendLine("📷 *Paste your screenshot here (Ctrl+V) — it's already on your clipboard.*");
+            sb.AppendLine();
+        }
 
         if (!string.IsNullOrWhiteSpace(expected))
         {

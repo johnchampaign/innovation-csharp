@@ -1494,8 +1494,40 @@ public partial class MainWindow : Window, IUserPromptSink
 
     private void ReportBugButton_Click(object sender, System.Windows.RoutedEventArgs e)
     {
-        var dlg = new BugReportDialog(_state) { Owner = this };
+        // Capture the window BEFORE opening the dialog so the screenshot
+        // shows the gameplay state, not the bug-report dialog itself.
+        var screenshot = TryCaptureWindow();
+        var dlg = new BugReportDialog(_state, screenshot) { Owner = this };
         dlg.ShowDialog();
+    }
+
+    /// <summary>
+    /// Render the main window to a PNG-encoded bitmap. Returns null if any
+    /// step throws — the bug report dialog handles the absent-screenshot
+    /// case by disabling its checkbox.
+    /// </summary>
+    private System.Windows.Media.Imaging.BitmapSource? TryCaptureWindow()
+    {
+        try
+        {
+            // RenderTargetBitmap renders the WPF visual tree at the
+            // requested size. ActualWidth/Height are in DIPs; multiplying
+            // by the device pixel-per-DIP would give a sharper PNG, but
+            // 96 dpi keeps the file small enough that GitHub uploads it
+            // in seconds. Bug screenshots don't need to be pixel-perfect.
+            int w = (int)Math.Round(ActualWidth);
+            int h = (int)Math.Round(ActualHeight);
+            if (w <= 0 || h <= 0) return null;
+            var bmp = new System.Windows.Media.Imaging.RenderTargetBitmap(
+                w, h, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+            bmp.Render(this);
+            bmp.Freeze();
+            return bmp;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public IReadOnlyList<int> PromptCardOrder(GameState g, PlayerState self, SelectCardOrderRequest req)
