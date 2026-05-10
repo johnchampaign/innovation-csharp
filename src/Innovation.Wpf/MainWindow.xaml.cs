@@ -1492,6 +1492,12 @@ public partial class MainWindow : Window, IUserPromptSink
         }
     }
 
+    private void ReportBugButton_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        var dlg = new BugReportDialog(_state) { Owner = this };
+        dlg.ShowDialog();
+    }
+
     public IReadOnlyList<int> PromptCardOrder(GameState g, PlayerState self, SelectCardOrderRequest req)
     {
         // Dialog shows the FINAL placement (top-first). Each action gets

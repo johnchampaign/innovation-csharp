@@ -199,9 +199,13 @@
                             FontFamily="Segoe UI" FontSize="11"
                             Click="LoadStateButton_Click"/>
                     <Button x:Name="OpenLogButton"
-                            Content="Open log file" Padding="6,2"
+                            Content="Open log file" Margin="0,0,4,0" Padding="6,2"
                             FontFamily="Segoe UI" FontSize="11"
                             Click="OpenLogButton_Click"/>
+                    <Button x:Name="ReportBugButton"
+                            Content="Report a bug…" Padding="6,2"
+                            FontFamily="Segoe UI" FontSize="11"
+                            Click="ReportBugButton_Click"/>
                 </StackPanel>
                 </Grid>
             </Border>
