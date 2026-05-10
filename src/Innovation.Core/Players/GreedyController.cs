@@ -308,7 +308,28 @@ public sealed class GreedyController : IPlayerController
         return ordered.Take(Math.Max(minTakeable, take)).ToList();
     }
 
-    public bool ChooseYesNo(GameState g, PlayerState self, YesNoChoiceRequest req) => true;
+    public bool ChooseYesNo(GameState g, PlayerState self, YesNoChoiceRequest req)
+    {
+        // Card-specific overrides for Yes/No prompts where "always yes" is
+        // a known bad heuristic. Detected by prompt prefix.
+        if (req.Prompt?.StartsWith("Canal Building:") == true)
+        {
+            // Exchange all highest hand cards with all highest score cards.
+            // Net: the higher-age side moves up to score, lower-age side
+            // comes back to hand. Net score change = (handHi − scoreHi)
+            // × matched cards. So accept iff handHi > scoreHi.
+            int handHi = self.Hand.Count == 0 ? 0
+                : self.Hand.Max(id => g.Cards[id].Age);
+            int scoreHi = self.ScorePile.Count == 0 ? 0
+                : self.ScorePile.Max(id => g.Cards[id].Age);
+            return handHi > scoreHi;
+        }
+
+        // Default: accept. Most "you may X" prompts gate a benefit, and
+        // the AI's own ChooseAction-level evaluation already weighed
+        // whether playing this dogma was worthwhile.
+        return true;
+    }
 
     public CardColor? ChooseColor(GameState g, PlayerState self, SelectColorRequest req)
     {

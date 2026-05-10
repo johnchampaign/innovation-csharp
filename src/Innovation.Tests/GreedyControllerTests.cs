@@ -160,6 +160,51 @@ public class GreedyControllerTests
     }
 
     [Fact]
+    public void ChooseYesNo_CanalBuilding_AcceptsWhenHandHigher()
+    {
+        var g = new GameState(AllCards, 2);
+        foreach (var c in AllCards) g.Decks[c.Age].Add(c.Id);
+        var me = g.Players[0];
+
+        // Hand has age-3, score has age-1 — exchange moves age-3 up to
+        // score, age-1 down to hand. Net: score increases. Accept.
+        me.Hand.Add(AllCards.First(c => c.Age == 3).Id);
+        me.ScorePile.Add(AllCards.First(c => c.Age == 1).Id);
+
+        var req = new YesNoChoiceRequest
+        {
+            Prompt = "Canal Building: exchange all highest cards in your hand "
+                   + "with all highest cards in your score pile?",
+            PlayerIndex = 0,
+        };
+        var greedy = new GreedyController(seed: 1);
+        Assert.True(greedy.ChooseYesNo(g, me, req));
+    }
+
+    [Fact]
+    public void ChooseYesNo_CanalBuilding_DeclinesWhenScoreHigher()
+    {
+        // The bug scenario: AI did Canal Building once (good), state changed
+        // so hand-high < score-high. Now the second activation would REVERT
+        // the gain. AI should decline.
+        var g = new GameState(AllCards, 2);
+        foreach (var c in AllCards) g.Decks[c.Age].Add(c.Id);
+        var me = g.Players[0];
+
+        me.Hand.Add(AllCards.First(c => c.Age == 1).Id);
+        me.ScorePile.Add(AllCards.First(c => c.Age == 3).Id);
+
+        var req = new YesNoChoiceRequest
+        {
+            Prompt = "Canal Building: exchange all highest cards in your hand "
+                   + "with all highest cards in your score pile?",
+            PlayerIndex = 0,
+        };
+        var greedy = new GreedyController(seed: 1);
+        Assert.False(greedy.ChooseYesNo(g, me, req));
+    }
+
+    [Fact]
     public void ChooseHandCardSubset_NonDemocracyPrompt_StillTakesMaxCount()
     {
         // Belt-and-braces: confirm the Democracy special-case doesn't
