@@ -269,6 +269,23 @@ public sealed class GreedyController : IPlayerController
         // thread a flag through the choice infrastructure.
         bool wantHigh = req.Prompt?.StartsWith("Masonry:") == true;
 
+        // Democracy rewards "more cards returned than any other player" with
+        // a single age-8 score. Returning the whole hand to win that reward
+        // is almost never worth it — one card beats every opponent who
+        // returned zero, which covers the typical case. The full
+        // count-the-opposition logic would need handler state we can't see
+        // from here, so default to 1; better to play it safe and miss the
+        // reward sometimes than to dump the hand for it. (Bug #2.)
+        if (req.Prompt?.StartsWith("Democracy:") == true)
+        {
+            // Take exactly 1 (or 0 if the prompt somehow allows that and
+            // there's nothing to return — defensive).
+            int target = Math.Min(1, maxTakeable);
+            target = Math.Max(target, minTakeable);
+            var lowestOne = req.EligibleCardIds.OrderBy(id => g.Cards[id].Age).Take(target).ToList();
+            return lowestOne;
+        }
+
         var ordered = wantHigh
             ? req.EligibleCardIds.OrderByDescending(id => g.Cards[id].Age).ToList()
             : req.EligibleCardIds.OrderBy(id => g.Cards[id].Age).ToList();

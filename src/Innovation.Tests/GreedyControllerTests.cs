@@ -133,4 +133,52 @@ public class GreedyControllerTests
         int pick = greedy.ChooseInitialMeld(g, g.Players[0]);
         Assert.Contains(pick, g.Players[0].Hand);
     }
+
+    [Fact]
+    public void ChooseHandCardSubset_DemocracyPrompt_ReturnsAtMostOne()
+    {
+        // Regression guard for issue #2: the AI used to return its entire
+        // hand for Democracy, which is hand-suicide for a single age-8
+        // score. Returning 1 card is enough to claim the reward against
+        // any opponent who returned 0 — the common case.
+        var g = new GameState(AllCards, 2);
+        foreach (var c in AllCards) g.Decks[c.Age].Add(c.Id);
+        var hand = AllCards.Take(7).Select(c => c.Id).ToArray();
+        g.Players[0].Hand.AddRange(hand);
+
+        var req = new SelectHandCardSubsetRequest
+        {
+            Prompt = "Democracy: return any number of cards from your hand.",
+            PlayerIndex = 0,
+            EligibleCardIds = hand,
+            MinCount = 0,
+            MaxCount = hand.Length,
+        };
+        var greedy = new GreedyController(seed: 1);
+        var picks = greedy.ChooseHandCardSubset(g, g.Players[0], req);
+        Assert.Single(picks);
+    }
+
+    [Fact]
+    public void ChooseHandCardSubset_NonDemocracyPrompt_StillTakesMaxCount()
+    {
+        // Belt-and-braces: confirm the Democracy special-case doesn't
+        // leak into other "return any number" prompts.
+        var g = new GameState(AllCards, 2);
+        foreach (var c in AllCards) g.Decks[c.Age].Add(c.Id);
+        var hand = AllCards.Take(3).Select(c => c.Id).ToArray();
+        g.Players[0].Hand.AddRange(hand);
+
+        var req = new SelectHandCardSubsetRequest
+        {
+            Prompt = "Currency: return any number of cards from your hand.",
+            PlayerIndex = 0,
+            EligibleCardIds = hand,
+            MinCount = 0,
+            MaxCount = hand.Length,
+        };
+        var greedy = new GreedyController(seed: 1);
+        var picks = greedy.ChooseHandCardSubset(g, g.Players[0], req);
+        Assert.Equal(3, picks.Count);
+    }
 }
