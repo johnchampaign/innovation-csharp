@@ -400,7 +400,7 @@ public sealed class GameForm : Form, IUserPromptSink
     {
         SeatKind.Human => new HumanController(this),
         SeatKind.Random => new RandomController(_config.Seed + 1_000 * (seat + 1)),
-        SeatKind.Greedy => new GreedyController(_config.Seed + 10_000 * (seat + 1)),
+        SeatKind.Greedy => new GreedyController(_config.Seed + 10_000 * (seat + 1), lookahead: 2),
         _ => throw new InvalidOperationException($"Unknown SeatKind {kind}"),
     };
 

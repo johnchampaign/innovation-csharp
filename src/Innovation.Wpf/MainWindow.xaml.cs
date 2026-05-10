@@ -136,7 +136,7 @@ public partial class MainWindow : Window, IUserPromptSink
             controllers[i] = opts.Seats[i] switch
             {
                 SeatKind.Human => new HumanController(this),
-                SeatKind.Greedy => new GreedyController(seatRng.Next()),
+                SeatKind.Greedy => new GreedyController(seatRng.Next(), lookahead: 2),
                 SeatKind.Random => new RandomController(seatRng.Next()),
                 _ => throw new InvalidOperationException($"Unknown seat kind {opts.Seats[i]}."),
             };

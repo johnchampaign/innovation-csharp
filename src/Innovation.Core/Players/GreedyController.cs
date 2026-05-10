@@ -24,14 +24,25 @@ public sealed class GreedyController : IPlayerController
     private readonly RandomController _rollout;
     private readonly PessimisticOpponentController _pessimisticOpponent;
 
-    public GreedyController(Random rng)
+    /// <summary>
+    /// 1 = single-ply (just this action). 2 = look ahead to the AI's
+    /// second action of the same turn so combos like "Bicycle then
+    /// Achieve" are visible. 2 costs ~|legal|² trials per top-level
+    /// decision; still well under a second on modern hardware. Default
+    /// stays 1 so existing tests keep their fast behaviour; the WPF and
+    /// WinForms shells pass 2.
+    /// </summary>
+    private readonly int _lookahead;
+
+    public GreedyController(Random rng, int lookahead = 1)
     {
         _rollout = new RandomController(rng);
         // Seed pessimistic opponent off the same rng for determinism.
         _pessimisticOpponent = new PessimisticOpponentController(new Random(rng.Next()));
+        _lookahead = Math.Max(1, lookahead);
     }
-    public GreedyController(int seed) : this(new Random(seed)) { }
-    public GreedyController() : this(new Random()) { }
+    public GreedyController(int seed, int lookahead = 1) : this(new Random(seed), lookahead) { }
+    public GreedyController() : this(new Random(), 1) { }
 
     public int ChooseInitialMeld(GameState g, PlayerState self)
     {
@@ -61,14 +72,105 @@ public sealed class GreedyController : IPlayerController
     {
         if (legal.Count == 1) return legal[0];
 
+        // Two-ply only kicks in when this is the first of two same-turn
+        // actions. With one action remaining, two-ply == one-ply. The
+        // setup-time and end-of-turn checks fall through to single-ply.
+        bool twoPly = _lookahead >= 2 && g.ActionsRemaining >= 2 && !g.IsGameOver;
+
         PlayerAction best = legal[0];
         long bestScore = long.MinValue;
         foreach (var action in legal)
         {
-            long score = TryAction(g, self.Index, action);
+            long score = twoPly
+                ? TryActionTwoPly(g, self.Index, action)
+                : TryAction(g, self.Index, action);
             if (score > bestScore) { bestScore = score; best = action; }
         }
         return best;
+    }
+
+    /// <summary>
+    /// Score the position reached by applying <paramref name="firstAction"/>
+    /// AND THEN the best legal second action of the same turn — so the
+    /// search sees "play Bicycle, then Achieve age 7" as a single plan,
+    /// not as two independent decisions.
+    ///
+    /// The second action is found by enumerating legal actions in the
+    /// post-first-action clone and recursively scoring each via the
+    /// existing one-ply trial. That's |legal|² trials in the worst case.
+    ///
+    /// If the first action ends the turn (game over, last achievement
+    /// claimed, etc.) we fall back to the single-ply score on the
+    /// resulting state.
+    /// </summary>
+    private long TryActionTwoPly(GameState g, int selfIndex, PlayerAction firstAction)
+    {
+        GameLog.Pause();
+        try
+        {
+            GameState afterFirst;
+            try
+            {
+                afterFirst = g.DeepClone();
+                var rollouts = MakeRollouts(afterFirst.Players.Length, selfIndex);
+                var runner = new GameRunner(afterFirst, rollouts);
+                runner.ApplyActionAndResolveDogma(firstAction);
+            }
+            catch
+            {
+                return long.MinValue;
+            }
+
+            // Turn ended (game over, or the runner advanced the turn
+            // because no actions remained, or a Dogma claim used up the
+            // turn) — score the resulting state directly.
+            if (afterFirst.IsGameOver
+                || afterFirst.ActivePlayer != selfIndex
+                || afterFirst.ActionsRemaining == 0)
+            {
+                return HeuristicEvaluator.ScoreRelative(afterFirst, selfIndex, searchDepth: 1);
+            }
+
+            // Search action 2.
+            var legal2 = LegalActions.Enumerate(afterFirst, afterFirst.Players[selfIndex]);
+            if (legal2.Count == 0)
+                return HeuristicEvaluator.ScoreRelative(afterFirst, selfIndex, searchDepth: 1);
+
+            long bestSecond = long.MinValue;
+            foreach (var second in legal2)
+            {
+                long s = TryActionFromClone(afterFirst, selfIndex, second);
+                if (s > bestSecond) bestSecond = s;
+            }
+            return bestSecond == long.MinValue
+                ? HeuristicEvaluator.ScoreRelative(afterFirst, selfIndex, searchDepth: 1)
+                : bestSecond;
+        }
+        finally { GameLog.Resume(); }
+    }
+
+    /// <summary>Single-ply trial of <paramref name="action"/> from a
+    /// pre-cloned base. Used by two-ply search for the second action.</summary>
+    private long TryActionFromClone(GameState baseClone, int selfIndex, PlayerAction action)
+    {
+        GameState clone;
+        try { clone = baseClone.DeepClone(); }
+        catch { return long.MinValue; }
+
+        var rollouts = MakeRollouts(clone.Players.Length, selfIndex);
+        var runner = new GameRunner(clone, rollouts);
+        try { runner.ApplyActionAndResolveDogma(action); }
+        catch { return long.MinValue; }
+
+        return HeuristicEvaluator.ScoreRelative(clone, selfIndex, searchDepth: 1);
+    }
+
+    private IPlayerController[] MakeRollouts(int n, int selfIndex)
+    {
+        var rollouts = new IPlayerController[n];
+        for (int i = 0; i < n; i++)
+            rollouts[i] = (i == selfIndex) ? (IPlayerController)_rollout : _pessimisticOpponent;
+        return rollouts;
     }
 
     /// <summary>
