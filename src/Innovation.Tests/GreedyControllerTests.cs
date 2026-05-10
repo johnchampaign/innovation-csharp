@@ -182,6 +182,30 @@ public class GreedyControllerTests
     }
 
     [Fact]
+    public void ChooseYesNo_CanalBuilding_DeclinesWhenSameAgeMoreCardsInScore()
+    {
+        // Tied ages but score has more cards at that age: net loss.
+        // Hand: 1 × age-3. Score: 2 × age-3. Exchange moves 1 to score
+        // (+3) and 2 back to hand (-6). Net -3 → decline.
+        var g = new GameState(AllCards, 2);
+        foreach (var c in AllCards) g.Decks[c.Age].Add(c.Id);
+        var me = g.Players[0];
+        var threes = AllCards.Where(c => c.Age == 3).Take(3).Select(c => c.Id).ToList();
+        me.Hand.Add(threes[0]);
+        me.ScorePile.Add(threes[1]);
+        me.ScorePile.Add(threes[2]);
+
+        var req = new YesNoChoiceRequest
+        {
+            Prompt = "Canal Building: exchange all highest cards in your hand "
+                   + "with all highest cards in your score pile?",
+            PlayerIndex = 0,
+        };
+        var greedy = new GreedyController(seed: 1);
+        Assert.False(greedy.ChooseYesNo(g, me, req));
+    }
+
+    [Fact]
     public void ChooseYesNo_CanalBuilding_DeclinesWhenScoreHigher()
     {
         // The bug scenario: AI did Canal Building once (good), state changed

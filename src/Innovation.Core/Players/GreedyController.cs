@@ -314,15 +314,19 @@ public sealed class GreedyController : IPlayerController
         // a known bad heuristic. Detected by prompt prefix.
         if (req.Prompt?.StartsWith("Canal Building:") == true)
         {
-            // Exchange all highest hand cards with all highest score cards.
-            // Net: the higher-age side moves up to score, lower-age side
-            // comes back to hand. Net score change = (handHi − scoreHi)
-            // × matched cards. So accept iff handHi > scoreHi.
+            // Compute the actual net score change from the exchange:
+            // (sum of all hand cards at handHi) - (sum of all score cards
+            // at scoreHi). Comparing ages alone misses the count factor —
+            // 1 age-3 in hand vs 2 age-3s in score is a -3 score change
+            // even though the ages tie.
             int handHi = self.Hand.Count == 0 ? 0
                 : self.Hand.Max(id => g.Cards[id].Age);
             int scoreHi = self.ScorePile.Count == 0 ? 0
                 : self.ScorePile.Max(id => g.Cards[id].Age);
-            return handHi > scoreHi;
+            int handMovers = self.Hand.Count(id => g.Cards[id].Age == handHi);
+            int scoreMovers = self.ScorePile.Count(id => g.Cards[id].Age == scoreHi);
+            int net = (handHi * handMovers) - (scoreHi * scoreMovers);
+            return net > 0;
         }
 
         // Default: accept. Most "you may X" prompts gate a benefit, and
