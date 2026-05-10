@@ -22,7 +22,7 @@ namespace Innovation.Core.Players;
 public sealed class GreedyController : IPlayerController
 {
     private readonly RandomController _rollout;
-    private readonly PessimisticOpponentController _pessimisticOpponent;
+    private readonly RationalOpponentController _opponentRollout;
 
     /// <summary>
     /// 1 = single-ply (just this action). 2 = look ahead to the AI's
@@ -37,8 +37,8 @@ public sealed class GreedyController : IPlayerController
     public GreedyController(Random rng, int lookahead = 1)
     {
         _rollout = new RandomController(rng);
-        // Seed pessimistic opponent off the same rng for determinism.
-        _pessimisticOpponent = new PessimisticOpponentController(new Random(rng.Next()));
+        // Seed the opponent rollout off the same rng for determinism.
+        _opponentRollout = new RationalOpponentController(new Random(rng.Next()));
         _lookahead = Math.Max(1, lookahead);
     }
     public GreedyController(int seed, int lookahead = 1) : this(new Random(seed), lookahead) { }
@@ -169,7 +169,7 @@ public sealed class GreedyController : IPlayerController
     {
         var rollouts = new IPlayerController[n];
         for (int i = 0; i < n; i++)
-            rollouts[i] = (i == selfIndex) ? (IPlayerController)_rollout : _pessimisticOpponent;
+            rollouts[i] = (i == selfIndex) ? (IPlayerController)_rollout : _opponentRollout;
         return rollouts;
     }
 
@@ -200,15 +200,16 @@ public sealed class GreedyController : IPlayerController
 
         // Trial seats: self uses the random rollout (keeps in-dogma choices
         // varied so the activator's own picks aren't degenerate). Opponents
-        // use a PESSIMISTIC controller that declines optional shares —
-        // models a worst-case opponent who refuses to bail out the
-        // activator's share-bonus play. Without this, random opponents in
-        // the trial flip 50/50 on subset prompts, overestimating the
-        // activator's payoff for "share-baiting" cards like Currency,
-        // Calendar, Domestication, etc.
+        // use a RATIONAL controller that takes share-positive prompts
+        // (mostly free benefits) but commits the minimum hand cost — gives
+        // the activator a realistic projection of "if my opponent acts
+        // sensibly, what will the dogma actually do?" Earlier versions
+        // used a strictly pessimistic decline-everything controller, which
+        // under-modelled positive-sum shares like Mathematics where the
+        // opponent gains a free meld and would obviously share (#1).
         var rollouts = new IPlayerController[clone.Players.Length];
         for (int i = 0; i < rollouts.Length; i++)
-            rollouts[i] = (i == selfIndex) ? (IPlayerController)_rollout : _pessimisticOpponent;
+            rollouts[i] = (i == selfIndex) ? (IPlayerController)_rollout : _opponentRollout;
 
         var runner = new GameRunner(clone, rollouts);
         try
