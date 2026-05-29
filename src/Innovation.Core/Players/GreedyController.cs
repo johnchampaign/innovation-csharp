@@ -21,7 +21,15 @@ namespace Innovation.Core.Players;
 /// </summary>
 public sealed class GreedyController : IPlayerController
 {
-    private readonly RandomController _rollout;
+    // Opponents in the trial use a rational-share controller (see
+    // RationalOpponentController). The trial-self uses `this` directly —
+    // so the trial's in-dogma decisions match what the AI will actually
+    // pick in real play. Earlier versions used a RandomController for
+    // trial-self ("vary the activator's own picks"); that produced
+    // optimistic projections for opt-in cards like Canal Building where
+    // the real heuristic would decline but a 50/50 random would accept
+    // half the time, leading the AI to thrash on activations whose
+    // payoff was random in the trial but zero in reality.
     private readonly RationalOpponentController _opponentRollout;
 
     /// <summary>
@@ -36,8 +44,7 @@ public sealed class GreedyController : IPlayerController
 
     public GreedyController(Random rng, int lookahead = 1)
     {
-        _rollout = new RandomController(rng);
-        // Seed the opponent rollout off the same rng for determinism.
+        // Seed the opponent rollout off the rng for determinism.
         _opponentRollout = new RationalOpponentController(new Random(rng.Next()));
         _lookahead = Math.Max(1, lookahead);
     }
@@ -169,7 +176,7 @@ public sealed class GreedyController : IPlayerController
     {
         var rollouts = new IPlayerController[n];
         for (int i = 0; i < n; i++)
-            rollouts[i] = (i == selfIndex) ? (IPlayerController)_rollout : _opponentRollout;
+            rollouts[i] = (i == selfIndex) ? (IPlayerController)this : _opponentRollout;
         return rollouts;
     }
 
@@ -198,18 +205,22 @@ public sealed class GreedyController : IPlayerController
             return long.MinValue;
         }
 
-        // Trial seats: self uses the random rollout (keeps in-dogma choices
-        // varied so the activator's own picks aren't degenerate). Opponents
-        // use a RATIONAL controller that takes share-positive prompts
-        // (mostly free benefits) but commits the minimum hand cost — gives
-        // the activator a realistic projection of "if my opponent acts
-        // sensibly, what will the dogma actually do?" Earlier versions
-        // used a strictly pessimistic decline-everything controller, which
-        // under-modelled positive-sum shares like Mathematics where the
-        // opponent gains a free meld and would obviously share (#1).
+        // Trial seats: self uses THIS controller (so the trial's in-dogma
+        // picks match real play exactly — opt-in heuristics like Canal
+        // Building's "yes iff handHi×n > scoreHi×m" fire in the trial too,
+        // not just in real play). Earlier versions used a RandomController
+        // here for variety, but random in-dogma picks gave the AI an
+        // optimistic projection on opt-in cards: a 50/50 yes meant Canal
+        // Building looked positive on average in the trial even when the
+        // real heuristic would always decline, leading to thrashing.
+        //
+        // Opponents use a RATIONAL controller that takes share-positive
+        // prompts (mostly free benefits) but commits the minimum hand cost
+        // — a realistic projection of "if my opponent acts sensibly, what
+        // will the dogma actually do?"
         var rollouts = new IPlayerController[clone.Players.Length];
         for (int i = 0; i < rollouts.Length; i++)
-            rollouts[i] = (i == selfIndex) ? (IPlayerController)_rollout : _opponentRollout;
+            rollouts[i] = (i == selfIndex) ? (IPlayerController)this : _opponentRollout;
 
         var runner = new GameRunner(clone, rollouts);
         try
