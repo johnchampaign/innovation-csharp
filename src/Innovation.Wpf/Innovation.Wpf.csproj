@@ -10,7 +10,7 @@
     <!-- Version string surfaces in the Bug Report dialog so reports are
          tagged with the build that produced them. Bump when cutting a
          new release. -->
-    <Version>0.1.22</Version>
+    <Version>0.1.23</Version>
   </PropertyGroup>
 
   <ItemGroup>

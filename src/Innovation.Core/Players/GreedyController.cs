@@ -128,6 +128,13 @@ public sealed class GreedyController : IPlayerController
                 return long.MinValue;
             }
 
+            // If the first action was a total no-op dogma, the AI just
+            // burned an action and the second-action search would just
+            // pick whatever the AI would pick anyway. Penalize so that
+            // any state-changing alternative is preferred for action 1.
+            if (firstAction is DogmaAction && IsTotalNoOp(g, afterFirst))
+                return long.MinValue / 2;
+
             // Turn ended (game over, or the runner advanced the turn
             // because no actions remained, or a Dogma claim used up the
             // turn) — score the resulting state directly.
@@ -168,6 +175,10 @@ public sealed class GreedyController : IPlayerController
         var runner = new GameRunner(clone, rollouts);
         try { runner.ApplyActionAndResolveDogma(action); }
         catch { return long.MinValue; }
+
+        // No-op penalty (same as TryActionInner).
+        if (action is DogmaAction && IsTotalNoOp(baseClone, clone))
+            return long.MinValue / 2;
 
         return HeuristicEvaluator.ScoreRelative(clone, selfIndex, searchDepth: 1);
     }
@@ -232,7 +243,41 @@ public sealed class GreedyController : IPlayerController
             return long.MinValue;
         }
 
+        // No-op penalty: if a Dogma activation produced no observable
+        // change in any player's hand/score/board, the AI just burned an
+        // action for nothing. Return a near-minimum so it's only chosen
+        // when literally no other action would even draw a card. (Canal
+        // Building's heuristic correctly declines from a bad position,
+        // but if the AI doesn't detect the resulting no-op it'll keep
+        // re-picking the same dogma every turn.)
+        if (action is DogmaAction && IsTotalNoOp(g, clone))
+            return long.MinValue / 2;
+
         return HeuristicEvaluator.ScoreRelative(clone, selfIndex, searchDepth: 1);
+    }
+
+    /// <summary>
+    /// Coarse fingerprint check: do all players have the same hand size,
+    /// score-pile size, per-color stack size, and splay direction in both
+    /// states? If so, the dogma changed nothing observable and the action
+    /// was wasted.
+    /// </summary>
+    private static bool IsTotalNoOp(GameState before, GameState after)
+    {
+        if (before.Players.Length != after.Players.Length) return false;
+        for (int i = 0; i < before.Players.Length; i++)
+        {
+            var pb = before.Players[i];
+            var pa = after.Players[i];
+            if (pb.Hand.Count != pa.Hand.Count) return false;
+            if (pb.ScorePile.Count != pa.ScorePile.Count) return false;
+            for (int c = 0; c < pb.Stacks.Length; c++)
+            {
+                if (pb.Stacks[c].Count != pa.Stacks[c].Count) return false;
+                if (pb.Stacks[c].Splay != pa.Stacks[c].Splay) return false;
+            }
+        }
+        return true;
     }
 
     // In-dogma prompts. A full one-ply search over choice resolutions is
