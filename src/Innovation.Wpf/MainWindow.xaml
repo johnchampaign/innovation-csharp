@@ -189,28 +189,28 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
-                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="4">
+                <WrapPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="4">
                     <Button x:Name="CopyStateButton"
-                            Content="Copy state" Margin="0,0,4,0" Padding="6,2"
+                            Content="Copy state" Margin="0,2,4,0" Padding="6,2"
                             FontFamily="Segoe UI" FontSize="11"
                             Click="CopyStateButton_Click"/>
                     <Button x:Name="LoadStateButton"
-                            Content="Load state…" Margin="0,0,4,0" Padding="6,2"
+                            Content="Load state…" Margin="0,2,4,0" Padding="6,2"
                             FontFamily="Segoe UI" FontSize="11"
                             Click="LoadStateButton_Click"/>
                     <Button x:Name="OpenLogButton"
-                            Content="Open log file" Margin="0,0,4,0" Padding="6,2"
+                            Content="Open log file" Margin="0,2,4,0" Padding="6,2"
                             FontFamily="Segoe UI" FontSize="11"
                             Click="OpenLogButton_Click"/>
                     <Button x:Name="ReportBugButton"
-                            Content="Report a bug…" Margin="0,0,4,0" Padding="6,2"
+                            Content="Report a bug…" Margin="0,2,4,0" Padding="6,2"
                             FontFamily="Segoe UI" FontSize="11"
                             Click="ReportBugButton_Click"/>
                     <Button x:Name="UploadLogButton"
-                            Content="Upload log…" Padding="6,2"
+                            Content="Upload logs…" Margin="0,2,0,0" Padding="6,2"
                             FontFamily="Segoe UI" FontSize="11"
                             Click="UploadLogButton_Click"/>
-                </StackPanel>
+                </WrapPanel>
                 </Grid>
             </Border>
         </Grid>

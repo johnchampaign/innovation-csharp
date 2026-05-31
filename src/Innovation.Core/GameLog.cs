@@ -28,6 +28,18 @@ public static class GameLog
     public static string PreviousPath =>
         Path.Combine(Path.GetTempPath(), "innovation-previous-game.log");
 
+    /// <summary>
+    /// Persistent archive directory. Every finished game's log is copied
+    /// here on the next Start() call so the corpus accumulates indefinitely
+    /// for upload-log analysis. Lives under LocalApplicationData (not
+    /// TEMP) so OS temp-cleanup doesn't wipe it.
+    /// </summary>
+    public static string ArchiveDir =>
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Innovation",
+            "game-logs");
+
     public static void Start(string? path = null)
     {
         Stop();
@@ -37,11 +49,29 @@ public static class GameLog
             var dir = Path.GetDirectoryName(path);
             if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
 
-            // Rotate: rename existing "last game" to "previous game" so the
-            // last two games' logs are both available. Only applies when
-            // we're opening the default path; custom paths get truncated.
+            // Archive the just-finished game's log to the persistent
+            // corpus folder, then rotate the temp-folder copies. The
+            // archive file is named with the file's modification time so
+            // multiple runs in the same second still get unique names.
+            // Best-effort: any failure here is silently ignored — we're
+            // not going to break gameplay over an archive write.
             if (path == DefaultPath && File.Exists(path))
             {
+                try
+                {
+                    Directory.CreateDirectory(ArchiveDir);
+                    var stamp = File.GetLastWriteTimeUtc(path).ToString("yyyyMMdd-HHmmss");
+                    string archiveName = $"game-{stamp}.log";
+                    string archivePath = Path.Combine(ArchiveDir, archiveName);
+                    // Avoid clobbering an existing archive with the same
+                    // timestamp (rare; would require two restarts in the
+                    // same second).
+                    if (!File.Exists(archivePath))
+                        File.Copy(path, archivePath, overwrite: false);
+                }
+                catch { /* best-effort */ }
+
+                // Rotate temp copies for the "open previous log" UX.
                 try
                 {
                     if (File.Exists(PreviousPath)) File.Delete(PreviousPath);
