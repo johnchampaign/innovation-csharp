@@ -133,4 +133,38 @@ public sealed class BugReportSubmitter
         enc.Save(ms);
         return ms.ToArray();
     }
+
+    /// <summary>
+    /// Uploads <paramref name="logBytes"/> as a UTF-8 text file to
+    /// <c>play-logs/</c> in the target repo. Returns the raw-content URL
+    /// on success, or null on failure. Same auth as the bug-report path.
+    /// </summary>
+    public async Task<string?> UploadGameLogAsync(byte[] logBytes, string fileName, string commitMessage, CancellationToken ct = default)
+    {
+        const string folder = "play-logs";
+        string path = $"{folder}/{fileName}";
+        var url = $"{ApiBase}/repos/{Repo}/contents/{path}";
+        var body = new
+        {
+            message = commitMessage,
+            content = Convert.ToBase64String(logBytes),
+            branch = DefaultBranch,
+        };
+        var req = new HttpRequestMessage(HttpMethod.Put, url)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"),
+        };
+        using var resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
+        if (!resp.IsSuccessStatusCode) return null;
+
+        var json = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+        using var doc = JsonDocument.Parse(json);
+        if (doc.RootElement.TryGetProperty("content", out var content)
+            && content.TryGetProperty("html_url", out var u)
+            && u.GetString() is string raw)
+        {
+            return raw;
+        }
+        return null;
+    }
 }

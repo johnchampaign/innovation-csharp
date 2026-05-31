@@ -1501,6 +1501,12 @@ public partial class MainWindow : Window, IUserPromptSink
         dlg.ShowDialog();
     }
 
+    private void UploadLogButton_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        var dlg = new UploadLogDialog { Owner = this };
+        dlg.ShowDialog();
+    }
+
     /// <summary>
     /// Render the main window to a PNG-encoded bitmap. Returns null if any
     /// step throws — the bug report dialog handles the absent-screenshot

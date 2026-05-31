@@ -203,9 +203,13 @@
                             FontFamily="Segoe UI" FontSize="11"
                             Click="OpenLogButton_Click"/>
                     <Button x:Name="ReportBugButton"
-                            Content="Report a bug…" Padding="6,2"
+                            Content="Report a bug…" Margin="0,0,4,0" Padding="6,2"
                             FontFamily="Segoe UI" FontSize="11"
                             Click="ReportBugButton_Click"/>
+                    <Button x:Name="UploadLogButton"
+                            Content="Upload log…" Padding="6,2"
+                            FontFamily="Segoe UI" FontSize="11"
+                            Click="UploadLogButton_Click"/>
                 </StackPanel>
                 </Grid>
             </Border>
