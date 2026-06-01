@@ -250,4 +250,52 @@ public class GreedyControllerTests
         var picks = greedy.ChooseHandCardSubset(g, g.Players[0], req);
         Assert.Equal(3, picks.Count);
     }
+
+    // ---------- Road Building exchange (bug #3) ----------
+
+    [Fact]
+    public void ChooseYesNo_RoadBuildingExchange_DeclinesWhenOpponentHasNoGreen()
+    {
+        // Bug #3: AI activated Road Building, melded two, and accepted the
+        // "transfer your top red, get their top green" exchange even though
+        // the opponent had no top green to give back. Net effect: gifted a
+        // red away for nothing.
+        var g = new GameState(AllCards, 2);
+        foreach (var c in AllCards) g.Decks[c.Age].Add(c.Id);
+
+        // P0 (the AI) has some top red. P1 (the human) has no top green.
+        var red = g.Cards.First(c => c.Color == CardColor.Red);
+        g.Players[0].Stack(CardColor.Red).Meld(red.Id);
+        Assert.True(g.Players[1].Stack(CardColor.Green).IsEmpty);
+
+        var req = new YesNoChoiceRequest
+        {
+            Prompt = "Road Building: transfer your top red card to player 2, "
+                   + "in exchange for their top green card?",
+            PlayerIndex = 0,
+        };
+        var greedy = new GreedyController(seed: 1);
+        Assert.False(greedy.ChooseYesNo(g, g.Players[0], req));
+    }
+
+    [Fact]
+    public void ChooseYesNo_RoadBuildingExchange_AcceptsWhenOpponentHasGreen()
+    {
+        var g = new GameState(AllCards, 2);
+        foreach (var c in AllCards) g.Decks[c.Age].Add(c.Id);
+
+        var red = g.Cards.First(c => c.Color == CardColor.Red);
+        var green = g.Cards.First(c => c.Color == CardColor.Green);
+        g.Players[0].Stack(CardColor.Red).Meld(red.Id);
+        g.Players[1].Stack(CardColor.Green).Meld(green.Id);
+
+        var req = new YesNoChoiceRequest
+        {
+            Prompt = "Road Building: transfer your top red card to player 2, "
+                   + "in exchange for their top green card?",
+            PlayerIndex = 0,
+        };
+        var greedy = new GreedyController(seed: 1);
+        Assert.True(greedy.ChooseYesNo(g, g.Players[0], req));
+    }
 }

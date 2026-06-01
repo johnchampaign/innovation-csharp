@@ -385,6 +385,29 @@ public sealed class GreedyController : IPlayerController
             return net > 0;
         }
 
+        // Road Building's optional exchange: "transfer your top red, in
+        // exchange for their top green." If the named opponent has no top
+        // green, the "in exchange" leg is a no-op and we'd be gifting our
+        // red for nothing. Reported as bug #3 (v0.1.23): AI gave a red to
+        // a human with no top green, weakening its own board for free.
+        if (req.Prompt?.StartsWith("Road Building:") == true)
+        {
+            // Prompt format: "...player {N}, in exchange for their top green card?"
+            // Parse the 1-based seat index out and check that player's green stack.
+            var m = System.Text.RegularExpressions.Regex.Match(
+                req.Prompt, @"player (\d+)");
+            if (m.Success && int.TryParse(m.Groups[1].Value, out var seat1Based))
+            {
+                int opIdx = seat1Based - 1;
+                if (opIdx >= 0 && opIdx < g.Players.Length)
+                {
+                    var theirGreen = g.Players[opIdx].Stack(CardColor.Green);
+                    if (theirGreen.IsEmpty) return false;
+                }
+            }
+            return true;
+        }
+
         // Default: accept. Most "you may X" prompts gate a benefit, and
         // the AI's own ChooseAction-level evaluation already weighed
         // whether playing this dogma was worthwhile.
