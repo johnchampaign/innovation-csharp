@@ -1,0 +1,471 @@
+# Innovation game log — started 2026-06-18 09:27:50
+New game: seed=376812, seats=Human,Greedy
+P1 melds A1 Oars(Red)
+P2 melds A1 Writing(Blue)
+[state] SVYBAgEAAQEA/gMfAAoIDQEABwsECgYMCRMVFBIPGBAXFgkhHhkfGyIdHCAJLCopJCgjJSsnCTA2NTEvMjM0LQk6Pj08P0A7NzgJQ0hER0VCRkFJCUxNT1RSU0tRUAlWWV5bXVpcVVcKYWJfaGRjZ2VgZgECAAABAAkAAAAAAAAAAAAAAAEFAAAAAAAAAQAOAAAAAAAAAA==
+— P1 action (DogmaAction, turn 1, 1 left)
+Dogma: P1 activates A1 Oars(Red) (featured Castle)
+Effect 1 (demand) — Castle counts (frozen): P1=2, P2=0; targets: P2
+  → handler OarsDemandHandler on P2
+    = no-op (paused awaiting choice)
+  → handler OarsDemandHandler on P2
+transfer hand→score A1 Domestication(Yellow): P2 → P1 score
+P2 draws A1 Mysticism(Purple) (hand=1)
+    = progressed
+Effect 2 (share/non-demand) — Castle counts (frozen): P1=2, P2=0; targets: P1
+  → handler OarsDrawIfNoDemandHandler on P1
+    = no-op
+[state] SVYBAgEBAgIA/gMfAAkNAQAHCwQKBgwJExUUEg8YEBcWCSEeGR8bIh0cIAksKikkKCMlKycJMDY1MS8yMzQtCTo+PTw/QDs3OAlDSERHRUJGQUkJTE1PVFJTS1FQCVZZXltdWlxVVwphYl9oZGNnZWBmAQIAAAEACQAAAAAAAAEFAAAAAAEIAAAAAAAAAQAOAAAAAAAAAA==
+— P2 action (DogmaAction, turn 2, 2 left)
+Dogma: P2 activates A1 Writing(Blue) (featured Lightbulb)
+Effect 1 (share/non-demand) — Lightbulb counts (frozen): P1=0, P2=2; targets: P2
+  → handler DrawHandler on P2
+P2 draws A2 Fermenting(Yellow) (hand=2)
+    = progressed
+— P2 action (MeldAction, turn 2, 1 left)
+P2 melds A1 Mysticism(Purple)
+[state] SVYBAgEAAgMA/gMfAAkNAQAHCwQKBgwIFRQSDxgQFxYJIR4ZHxsiHRwgCSwqKSQoIyUrJwkwNjUxLzIzNC0JOj49PD9AOzc4CUNIREdFQkZBSQlMTU9UUlNLUVAJVlleW11aXFVXCmFiX2hkY2dlYGYBAgAAAQAJAAAAAAAAAQUAAAAAARMAAAAAAQAIAQAOAAAAAAAAAA==
+— P1 action (DogmaAction, turn 3, 2 left)
+Dogma: P1 activates A1 Oars(Red) (featured Castle)
+Effect 1 (demand) — Castle counts (frozen): P1=2, P2=3; targets: (none)
+Effect 2 (share/non-demand) — Castle counts (frozen): P1=2, P2=3; targets: P2,P1
+  → handler OarsDrawIfNoDemandHandler on P2
+P2 draws A1 Tools(Blue) (hand=2)
+    = progressed
+  → handler OarsDrawIfNoDemandHandler on P1
+P1 draws A1 Archery(Red) (hand=2)
+    = progressed
+P1 draws A1 Agriculture(Yellow) (hand=3)
+— P1 action (DogmaAction, turn 3, 1 left)
+Dogma: P1 activates A1 Oars(Red) (featured Castle)
+Effect 1 (demand) — Castle counts (frozen): P1=2, P2=3; targets: (none)
+Effect 2 (share/non-demand) — Castle counts (frozen): P1=2, P2=3; targets: P2,P1
+  → handler OarsDrawIfNoDemandHandler on P2
+P2 draws A1 Metalworking(Red) (hand=3)
+    = progressed
+  → handler OarsDrawIfNoDemandHandler on P1
+P1 draws A1 Sailing(Green) (hand=4)
+    = progressed
+P1 draws A1 Code of Laws(Purple) (hand=5)
+[state] SVYBAgEBAgQA/gMfAAMKBgwIFRQSDxgQFxYJIR4ZHxsiHRwgCSwqKSQoIyUrJwkwNjUxLzIzNC0JOj49PD9AOzc4CUNIREdFQkZBSQlMTU9UUlNLUVAJVlleW11aXFVXCmFiX2hkY2dlYGYFAgEACwQAAAEACQAAAAAAAAEFAAAAAAMTDQcAAAAAAQAIAQAOAAAAAAAAAA==
+— P2 action (DogmaAction, turn 4, 2 left)
+Dogma: P2 activates A1 Mysticism(Purple) (featured Castle)
+Effect 1 (share/non-demand) — Castle counts (frozen): P1=2, P2=3; targets: P2
+  → handler MysticismHandler on P2
+P2 draws A1 Pottery(Blue) (hand=4)
+P2 melds A1 Pottery(Blue)
+P2 draws A1 Masonry(Yellow) (hand=4)
+    = progressed
+— P2 action (MeldAction, turn 4, 1 left)
+P2 melds A2 Fermenting(Yellow)
+[state] SVYBAgEAAgUA/gMfAAEMCBUUEg8YEBcWCSEeGR8bIh0cIAksKikkKCMlKycJMDY1MS8yMzQtCTo+PTw/QDs3OAlDSERHRUJGQUkJTE1PVFJTS1FQCVZZXltdWlxVVwphYl9oZGNnZWBmBQIBAAsEAAABAAkAAAAAAAABBQAAAAADDQcGAQATAAABAAgCAAoOAAAAAAAAAA==
+— P1 action (DogmaAction, turn 5, 2 left)
+Dogma: P1 activates A1 Oars(Red) (featured Castle)
+Effect 1 (demand) — Castle counts (frozen): P1=2, P2=4; targets: (none)
+Effect 2 (share/non-demand) — Castle counts (frozen): P1=2, P2=4; targets: P2,P1
+  → handler OarsDrawIfNoDemandHandler on P2
+P2 draws A1 The Wheel(Green) (hand=4)
+    = progressed
+  → handler OarsDrawIfNoDemandHandler on P1
+P1 draws A2 Mathematics(Blue) (hand=6)
+    = progressed
+P1 draws A2 Mapmaking(Green) (hand=7)
+— P1 action (MeldAction, turn 5, 1 left)
+P1 melds A2 Mathematics(Blue)
+[state] SVYBAgEBAgYA/gMfAAAGEg8YEBcWCSEeGR8bIh0cIAksKikkKCMlKycJMDY1MS8yMzQtCTo+PTw/QDs3OAlDSERHRUJGQUkJTE1PVFJTS1FQCVZZXltdWlxVVwphYl9oZGNnZWBmBgIBAAsEFAAAAQAJAAABABUAAAEFAAAAAAQNBwYMAQATAAABAAgCAAoOAAAAAAAAAA==
+— P2 action (MeldAction, turn 6, 2 left)
+P2 melds A1 Masonry(Yellow)
+— P2 action (DogmaAction, turn 6, 1 left)
+Dogma: P2 activates A1 Masonry(Yellow) (featured Castle)
+Effect 1 (share/non-demand) — Castle counts (frozen): P1=2, P2=6; targets: P2
+  → handler MasonryHandler on P2
+    = no-op (paused awaiting choice)
+  → handler MasonryHandler on P2
+P2 melds A1 Tools(Blue)
+P2 melds A1 Metalworking(Red)
+P2 melds A1 The Wheel(Green)
+    = progressed
+[state] SVYBAgEAAgcA/gMfAAAGEg8YEBcWCSEeGR8bIh0cIAksKikkKCMlKycJMDY1MS8yMzQtCTo+PTw/QDs3OAlDSERHRUJGQUkJTE1PVFJTS1FQCVZZXltdWlxVVwphYl9oZGNnZWBmBgIBAAsEFAAAAQAJAAABABUAAAEFAAAAAAACAAYTAQAHAQAIAwANCg4BAAwAAAAAAA==
+— P1 action (DogmaAction, turn 7, 2 left)
+Dogma: P1 activates A2 Mathematics(Blue) (featured Lightbulb)
+Effect 1 (share/non-demand) — Lightbulb counts (frozen): P1=2, P2=2; targets: P2,P1
+  → handler MathematicsHandler on P2
+    = no-op
+  → handler MathematicsHandler on P1
+    = no-op (paused awaiting choice)
+  → handler MathematicsHandler on P1
+P1 returns A2 Mapmaking(Green)
+P1 draws A3 Paper(Green) (hand=6)
+P1 melds A3 Paper(Green)
+    = progressed
+— P1 action (MeldAction, turn 7, 1 left)
+P1 melds A1 Code of Laws(Purple)
+[state] SVYBAgEBAggA/gMfAAAHEg8YEBcWFAgeGR8bIh0cIAksKikkKCMlKycJMDY1MS8yMzQtCTo+PTw/QDs3OAlDSERHRUJGQUkJTE1PVFJTS1FQCVZZXltdWlxVVwphYl9oZGNnZWBmBAIBAAsAAAEACQEABAEAFQEAIQEFAAAAAAACAAYTAQAHAQAIAwANCg4BAAwAAAAAAA==
+— P2 action (DogmaAction, turn 8, 2 left)
+Dogma: P2 activates A1 Mysticism(Purple) (featured Castle)
+Effect 1 (share/non-demand) — Castle counts (frozen): P1=2, P2=13; targets: P2
+  → handler MysticismHandler on P2
+P2 draws A2 Currency(Green) (hand=1)
+P2 melds A2 Currency(Green)
+P2 draws A2 Calendar(Blue) (hand=1)
+    = progressed
+— P2 action (DogmaAction, turn 8, 1 left)
+Dogma: P2 activates A1 Metalworking(Red) (featured Castle)
+Effect 1 (share/non-demand) — Castle counts (frozen): P1=2, P2=10; targets: P2
+  → handler MetalworkingHandler on P2
+P2 draws A2 Road Building(Red) (hand=2)
+P2 scores A2 Road Building(Red)
+P2 draws A2 Canal Building(Yellow) (hand=2)
+    = progressed
+[state] SVYBAgEAAgkA/gMfAAADFxYUCB4ZHxsiHRwgCSwqKSQoIyUrJwkwNjUxLzIzNC0JOj49PD9AOzc4CUNIREdFQkZBSQlMTU9UUlNLUVAJVlleW11aXFVXCmFiX2hkY2dlYGYEAgEACwAAAQAJAQAEAQAVAQAhAQUAAAAAAg8QAgAGEwEABwEACAMADQoOAgASDAEYAAAAAA==
+— P1 action (DogmaAction, turn 9, 2 left)
+Dogma: P1 activates A1 Code of Laws(Purple) (featured Crown)
+Effect 1 (share/non-demand) — Crown counts (frozen): P1=5, P2=2; targets: P1
+  → handler CodeOfLawsHandler on P1
+    = no-op (paused awaiting choice)
+  → handler CodeOfLawsHandler on P1
+P1 tucks A1 City States(Purple)
+    = progressed (paused awaiting choice)
+  → handler CodeOfLawsHandler on P1
+P1 splays Purple Left
+    = progressed
+— P1 action (DogmaAction, turn 9, 1 left)
+Dogma: P1 activates A3 Paper(Green) (featured Lightbulb)
+Effect 1 (share/non-demand) — Lightbulb counts (frozen): P1=4, P2=2; targets: P1
+  → handler PaperSplayHandler on P1
+    = no-op
+Effect 2 (share/non-demand) — Lightbulb counts (frozen): P1=4, P2=2; targets: P1
+  → handler PaperDrawPerSplayHandler on P1
+P1 draws A4 Reformation(Purple) (hand=4)
+    = progressed
+[state] SVYBAgEBAgoA/gMfAAADFxYUCB4ZHxsiHRwgCCopJCgjJSsnCTA2NTEvMjM0LQk6Pj08P0A7NzgJQ0hER0VCRkFJCUxNT1RSU0tRUAlWWV5bXVpcVVcKYWJfaGRjZ2VgZgQBAAssAAABAAkCAQQCAQAVAQAhAQUAAAAAAg8QAgAGEwEABwEACAMADQoOAgASDAEYAAAAAA==
+— P2 action (DrawAction, turn 10, 2 left)
+P2 draws A2 Philosophy(Purple) (hand=3)
+— P2 action (DogmaAction, turn 10, 1 left)
+Dogma: P2 activates A1 Metalworking(Red) (featured Castle)
+Effect 1 (share/non-demand) — Castle counts (frozen): P1=3, P2=10; targets: P2
+  → handler MetalworkingHandler on P2
+P2 draws A2 Monotheism(Purple) (hand=4)
+P2 scores A2 Monotheism(Purple)
+P2 draws A2 Mapmaking(Green) (hand=4)
+P2 scores A2 Mapmaking(Green)
+P2 draws A3 Machinery(Yellow) (hand=4)
+P2 scores A3 Machinery(Yellow)
+P2 draws A3 Alchemy(Blue) (hand=4)
+P2 scores A3 Alchemy(Blue)
+P2 draws A3 Medicine(Yellow) (hand=4)
+    = progressed
+[state] SVYBAgEAAgsA/gMfAAAABRsiHRwgCCopJCgjJSsnCTA2NTEvMjM0LQk6Pj08P0A7NzgJQ0hER0VCRkFJCUxNT1RSU0tRUAlWWV5bXVpcVVcKYWJfaGRjZ2VgZgQBAAssAAABAAkCAQQCAQAVAQAhAQUAAAAABA8QFx8CAAYTAQAHAQAIAwANCg4CABIMBRgWFB4ZAAAAAA==
+— P1 action (MeldAction, turn 11, 2 left)
+P1 melds A4 Reformation(Purple)
+— P1 action (DogmaAction, turn 11, 1 left)
+Dogma: P1 activates A4 Reformation(Purple) (featured Leaf)
+Effect 1 (share/non-demand) — Leaf counts (frozen): P1=4, P2=1; targets: P1
+  → handler ReformationTuckHandler on P1
+    = no-op (paused awaiting choice)
+  → handler ReformationTuckHandler on P1
+P1 tucks A1 Agriculture(Yellow)
+P1 tucks A1 Sailing(Green)
+    = progressed
+Effect 2 (share/non-demand) — Leaf counts (frozen): P1=4, P2=1; targets: P1
+  → handler ReformationSplayHandler on P1
+    = no-op (paused awaiting choice)
+  → handler ReformationSplayHandler on P1
+P1 splays Purple Right
+    = progressed
+[state] SVYBAgEBAgwA/gMfAAAABRsiHRwgCCopJCgjJSsnCTA2NTEvMjM0LQk6Pj08P0A7NzgJQ0hER0VCRkFJCUxNT1RSU0tRUAlWWV5bXVpcVVcKYWJfaGRjZ2VgZgEBAQAAAQAJAwIsBAIBABUCACELAQUAAAAABA8QFx8CAAYTAQAHAQAIAwANCg4CABIMBRgWFB4ZAAAAAA==
+— P2 action (AchieveAction, turn 12, 2 left)
+P2 claims age-1 achievement
+— P2 action (AchieveAction, turn 12, 1 left)
+P2 claims age-2 achievement
+[state] SVYBAgEAAg0A+AMfAAAABRsiHRwgCCopJCgjJSsnCTA2NTEvMjM0LQk6Pj08P0A7NzgJQ0hER0VCRkFJCUxNT1RSU0tRUAlWWV5bXVpcVVcKYWJfaGRjZ2VgZgEBAQAAAQAJAwIsBAIBABUCACELAQUAAAAABA8QFx8CAAYTAQAHAQAIAwANCg4CABIMBRgWFB4ZAgECAAAA
+— P1 action (DogmaAction, turn 13, 2 left)
+Dogma: P1 activates A3 Paper(Green) (featured Lightbulb)
+Effect 1 (share/non-demand) — Lightbulb counts (frozen): P1=4, P2=2; targets: P1
+  → handler PaperSplayHandler on P1
+    = no-op (paused awaiting choice)
+  → handler PaperSplayHandler on P1
+P1 splays Green Left
+    = progressed
+Effect 2 (share/non-demand) — Lightbulb counts (frozen): P1=4, P2=2; targets: P1
+  → handler PaperDrawPerSplayHandler on P1
+P1 draws A4 Perspective(Yellow) (hand=2)
+    = progressed
+— P1 action (DogmaAction, turn 13, 1 left)
+Dogma: P1 activates A4 Reformation(Purple) (featured Leaf)
+Effect 1 (share/non-demand) — Leaf counts (frozen): P1=7, P2=1; targets: P1
+  → handler ReformationTuckHandler on P1
+    = no-op (paused awaiting choice)
+  → handler ReformationTuckHandler on P1
+P1 tucks A4 Perspective(Yellow)
+P1 tucks A1 Archery(Red)
+    = progressed
+Effect 2 (share/non-demand) — Leaf counts (frozen): P1=7, P2=1; targets: P1
+  → handler ReformationSplayHandler on P1
+    = no-op (paused awaiting choice)
+  → handler ReformationSplayHandler on P1
+P1 splays Yellow Right
+    = progressed
+[state] SVYBAgEBAg4A+AMfAAAABRsiHRwgBykkKCMlKycJMDY1MS8yMzQtCTo+PTw/QDs3OAlDSERHRUJGQUkJTE1PVFJTS1FQCVZZXltdWlxVVwphYl9oZGNnZWBmAAICACoCAAkBAwIsBAIBABUCASELAQUAAAAABA8QFx8CAAYTAQAHAQAIAwANCg4CABIMBRgWFB4ZAgECAAAA
+— P2 action (DogmaAction, turn 14, 2 left)
+Dogma: P2 activates A1 Mysticism(Purple) (featured Castle)
+Effect 1 (share/non-demand) — Castle counts (frozen): P1=2, P2=10; targets: P2
+  → handler MysticismHandler on P2
+P2 draws A3 Education(Purple) (hand=5)
+P2 melds A3 Education(Purple)
+P2 draws A3 Translation(Blue) (hand=5)
+    = progressed
+— P2 action (DogmaAction, turn 14, 1 left)
+Dogma: P2 activates A1 Metalworking(Red) (featured Castle)
+Effect 1 (share/non-demand) — Castle counts (frozen): P1=2, P2=7; targets: P2
+  → handler MetalworkingHandler on P2
+P2 draws A3 Feudalism(Purple) (hand=6)
+P2 scores A3 Feudalism(Purple)
+P2 draws A3 Engineering(Red) (hand=6)
+P2 scores A3 Engineering(Red)
+P2 draws A3 Optics(Red) (hand=6)
+    = progressed
+[state] SVYBAgEAAg8A+AMfAAAAAAcpJCgjJSsnCTA2NTEvMjM0LQk6Pj08P0A7NzgJQ0hER0VCRkFJCUxNT1RSU0tRUAlWWV5bXVpcVVcKYWJfaGRjZ2VgZgACAgAqAgAJAQMCLAQCAQAVAgEhCwEFAAAAAAYPEBcfIiACAAYTAQAHAgAbCAMADQoOAgASDAcYFhQeGR0cAgECAAAA
+— P1 action (DrawAction, turn 15, 2 left)
+P1 draws A4 Navigation(Green) (hand=1)
+— P1 action (DogmaAction, turn 15, 1 left)
+Dogma: P1 activates A2 Mathematics(Blue) (featured Lightbulb)
+Effect 1 (share/non-demand) — Lightbulb counts (frozen): P1=5, P2=5; targets: P2,P1
+  → handler MathematicsHandler on P2
+    = no-op (paused awaiting choice)
+  → handler MathematicsHandler on P2
+P2 returns A2 Calendar(Blue)
+P2 draws A4 Colonialism(Red) (hand=6)
+P2 melds A4 Colonialism(Red)
+    = progressed
+  → handler MathematicsHandler on P1
+    = no-op (paused awaiting choice)
+  → handler MathematicsHandler on P1
+P1 returns A4 Navigation(Green)
+P1 draws A5 Coal(Red) (hand=1)
+P1 melds A5 Coal(Red)
+    = progressed
+P1 draws A5 Steam Engine(Yellow) (hand=1)
+[state] SVYBAgEBAhAA+AMfAAABDwAGKCMlKycpBzUxLzIzNC0JOj49PD9AOzc4CUNIREdFQkZBSQlMTU9UUlNLUVAJVlleW11aXFVXCmFiX2hkY2dlYGYBNgICACoDADAJAQMCLAQCAQAVAgEhCwEFAAAAAAUQFx8iIAIABhMCACQHAgAbCAMADQoOAgASDAcYFhQeGR0cAgECAAAA
+— P2 action (AchieveAction, turn 16, 2 left)
+P2 claims age-3 achievement
+— P2 action (DogmaAction, turn 16, 1 left)
+Dogma: P2 activates A2 Currency(Green) (featured Crown)
+Effect 1 (share/non-demand) — Crown counts (frozen): P1=4, P2=2; targets: P1,P2
+  → handler CurrencyHandler on P1
+    = no-op (paused awaiting choice)
+  → handler CurrencyHandler on P1
+    = no-op
+  → handler CurrencyHandler on P2
+    = no-op (paused awaiting choice)
+  → handler CurrencyHandler on P2
+    = no-op (paused awaiting choice)
+  → handler CurrencyHandler on P2
+P2 returns A3 Optics(Red)
+P2 returns A3 Translation(Blue)
+P2 returns A3 Medicine(Yellow)
+P2 returns A2 Philosophy(Purple)
+P2 returns A2 Canal Building(Yellow)
+P2 draws A2 Calendar(Blue) (hand=1)
+P2 scores A2 Calendar(Blue)
+P2 draws A2 Philosophy(Purple) (hand=1)
+P2 scores A2 Philosophy(Purple)
+    = progressed
+[state] SVYBAgEAAhEA8AMfAAABEAMgIh8GKCMlKycpBzUxLzIzNC0JOj49PD9AOzc4CUNIREdFQkZBSQlMTU9UUlNLUVAJVlleW11aXFVXCmFiX2hkY2dlYGYBNgICACoDADAJAQMCLAQCAQAVAgEhCwEFAAAAAAACAAYTAgAkBwIAGwgDAA0KDgIAEgwJGBYUHhkdHA8XAwECAwAAAA==
+— P1 action (DogmaAction, turn 17, 2 left)
+Dogma: P1 activates A2 Mathematics(Blue) (featured Lightbulb)
+Effect 1 (share/non-demand) — Lightbulb counts (frozen): P1=5, P2=6; targets: P2,P1
+  → handler MathematicsHandler on P2
+    = no-op
+  → handler MathematicsHandler on P1
+    = no-op (paused awaiting choice)
+  → handler MathematicsHandler on P1
+P1 returns A5 Steam Engine(Yellow)
+P1 draws A6 Democracy(Purple) (hand=1)
+P1 melds A6 Democracy(Purple)
+    = progressed
+— P1 action (DrawAction, turn 17, 1 left)
+P1 draws A6 Machine Tools(Red) (hand=1)
+[state] SVYBAgEBAhIA8AMfAAABEAMgIh8GKCMlKycpCDUxLzIzNC02Bz08P0A7NzgJQ0hER0VCRkFJCUxNT1RSU0tRUAlWWV5bXVpcVVcKYWJfaGRjZ2VgZgE+AgIAKgMAMAkBBAI6LAQCAQAVAgEhCwEFAAAAAAACAAYTAgAkBwIAGwgDAA0KDgIAEgwJGBYUHhkdHA8XAwECAwAAAA==
+— P2 action (AchieveAction, turn 18, 2 left)
+P2 claims age-4 achievement
+— P2 action (DrawAction, turn 18, 1 left)
+P2 draws A4 Invention(Green) (hand=1)
+[state] SVYBAgEAAhMA4AMfAAABEAMgIh8FIyUrJykINTEvMjM0LTYHPTw/QDs3OAlDSERHRUJGQUkJTE1PVFJTS1FQCVZZXltdWlxVVwphYl9oZGNnZWBmAT4CAgAqAwAwCQEEAjosBAIBABUCASELAQUAAAAAASgCAAYTAgAkBwIAGwgDAA0KDgIAEgwJGBYUHhkdHA8XBAECAwQAAAA=
+— P1 action (DogmaAction, turn 19, 2 left)
+Dogma: P1 activates A2 Mathematics(Blue) (featured Lightbulb)
+Effect 1 (share/non-demand) — Lightbulb counts (frozen): P1=7, P2=6; targets: P1
+  → handler MathematicsHandler on P1
+    = no-op (paused awaiting choice)
+  → handler MathematicsHandler on P1
+P1 returns A6 Machine Tools(Red)
+P1 draws A7 Electricity(Green) (hand=1)
+P1 melds A7 Electricity(Green)
+    = progressed
+— P1 action (DogmaAction, turn 19, 1 left)
+Dogma: P1 activates A5 Coal(Red) (featured Factory)
+Effect 1 (share/non-demand) — Factory counts (frozen): P1=5, P2=2; targets: P1
+  → handler CoalTuckHandler on P1
+P1 draws A5 Statistics(Yellow) (hand=1)
+P1 tucks A5 Statistics(Yellow)
+    = progressed
+Effect 2 (share/non-demand) — Factory counts (frozen): P1=5, P2=2; targets: P1
+  → handler CoalSplayHandler on P1
+    = no-op (paused awaiting choice)
+  → handler CoalSplayHandler on P1
+P1 splays Red Right
+    = progressed
+Effect 3 (share/non-demand) — Factory counts (frozen): P1=5, P2=2; targets: P1
+  → handler CoalScorePairHandler on P1
+    = no-op (paused awaiting choice)
+  → handler CoalScorePairHandler on P1
+P1 scores from board A6 Democracy(Purple)
+P1 scores from board A4 Reformation(Purple)
+    = progressed
+[state] SVYBAgEBAhQA4AMfAAABEAMgIh8FIyUrJykHMS8yMzQtNgg9PD9AOzc4PghIREdFQkZBSQlMTU9UUlNLUVAJVlleW11aXFVXCmFiX2hkY2dlYGYAAwIAKjUDAjAJAQICBAIBABUDAUMhCwMFOiwAAAAAASgCAAYTAgAkBwIAGwgDAA0KDgIAEgwJGBYUHhkdHA8XBAECAwQAAAA=
+— P2 action (DogmaAction, turn 20, 2 left)
+Dogma: P2 activates A4 Colonialism(Red) (featured Factory)
+Effect 1 (share/non-demand) — Factory counts (frozen): P1=5, P2=2; targets: P1,P2
+  → handler ColonialismHandler on P1
+P1 draws A3 Optics(Red) (hand=1)
+P1 tucks A3 Optics(Red)
+P1 draws A3 Translation(Blue) (hand=1)
+P1 tucks A3 Translation(Blue)
+P1 draws A3 Medicine(Yellow) (hand=1)
+P1 tucks A3 Medicine(Yellow)
+P1 draws A4 Anatomy(Yellow) (hand=1)
+P1 tucks A4 Anatomy(Yellow)
+    = progressed
+  → handler ColonialismHandler on P2
+P2 draws A4 Enterprise(Purple) (hand=2)
+P2 tucks A4 Enterprise(Purple)
+P2 draws A4 Printing Press(Blue) (hand=2)
+P2 tucks A4 Printing Press(Blue)
+P2 draws A4 Gunpowder(Red) (hand=2)
+P2 tucks A4 Gunpowder(Red)
+P2 draws A4 Navigation(Green) (hand=2)
+P2 tucks A4 Navigation(Green)
+P2 draws A5 Measurement(Green) (hand=2)
+P2 tucks A5 Measurement(Green)
+    = progressed
+P2 draws A5 Chemistry(Blue) (hand=2)
+— P2 action (DogmaAction, turn 20, 1 left)
+Dogma: P2 activates A4 Colonialism(Red) (featured Factory)
+Effect 1 (share/non-demand) — Factory counts (frozen): P1=5, P2=2; targets: P1,P2
+  → handler ColonialismHandler on P1
+P1 draws A5 Physics(Blue) (hand=1)
+P1 tucks A5 Physics(Blue)
+    = progressed
+  → handler ColonialismHandler on P2
+P2 draws A5 The Pirate Code(Red) (hand=3)
+P2 tucks A5 The Pirate Code(Red)
+P2 claims the Monument achievement
+P2 draws A5 Societies(Purple) (hand=3)
+P2 tucks A5 Societies(Purple)
+P2 draws A5 Astronomy(Purple) (hand=3)
+P2 tucks A5 Astronomy(Purple)
+P2 draws A5 Steam Engine(Yellow) (hand=3)
+P2 tucks A5 Steam Engine(Yellow)
+P2 draws A6 Industrialization(Red) (hand=3)
+P2 tucks A6 Industrialization(Red)
+P2 draws A6 Encyclopedia(Blue) (hand=3)
+P2 tucks A6 Encyclopedia(Blue)
+P2 draws A6 Metric System(Green) (hand=3)
+P2 tucks A6 Metric System(Green)
+P2 draws A6 Vaccination(Yellow) (hand=3)
+P2 tucks A6 Vaccination(Yellow)
+    = progressed
+P2 draws A6 Emancipation(Purple) (hand=3)
+[state] SVYBAgEAAhUA4AMeAAABEAAAAAM3OD4ISERHRUJGQUkJTE1PVFJTS1FQCVZZXltdWlxVVwphYl9oZGNnZWBmAAUCACo1HyMEAjAJASACAgQCAwAVIjIDAUMhCwMFOiwAAAAAAygvOwQABhM2QAUAJAcnMz0FABsIJTQtBQANCg4rPAUAEgwpMT8JGBYUHhkdHA8XBAECAwQBAAA=
+— P1 action (DrawAction, turn 21, 2 left)
+P1 draws A7 Railroad(Purple) (hand=1)
+— P1 action (DogmaAction, turn 21, 1 left)
+Dogma: P1 activates A1 Agriculture(Yellow) (featured Leaf)
+Effect 1 (share/non-demand) — Leaf counts (frozen): P1=9, P2=1; targets: P1
+  → handler AgricultureHandler on P1
+    = no-op (paused awaiting choice)
+  → handler AgricultureHandler on P1
+P1 returns A7 Railroad(Purple)
+P1 draws A8 Corporations(Green) (hand=1)
+P1 scores A8 Corporations(Green)
+    = progressed
+[state] SVYBAgEBAhYA4AMeAAABEAAAAAM3OD4IREdFQkZBSUgITU9UUlNLUVAJVlleW11aXFVXCmFiX2hkY2dlYGYABQIAKjUfIwQCMAkBIAICBAIDABUiMgMBQyELBAU6LEwAAAAAAygvOwQABhM2QAUAJAcnMz0FABsIJTQtBQANCg4rPAUAEgwpMT8JGBYUHhkdHA8XBAECAwQBAAA=
+— P2 action (MeldAction, turn 22, 2 left)
+P2 melds A6 Emancipation(Purple)
+— P2 action (DogmaAction, turn 22, 1 left)
+Dogma: P2 activates A2 Currency(Green) (featured Crown)
+Effect 1 (share/non-demand) — Crown counts (frozen): P1=9, P2=2; targets: P1,P2
+  → handler CurrencyHandler on P1
+    = no-op
+  → handler CurrencyHandler on P2
+    = no-op (paused awaiting choice)
+  → handler CurrencyHandler on P2
+P2 returns A5 Chemistry(Blue)
+P2 returns A4 Invention(Green)
+P2 draws A2 Canal Building(Yellow) (hand=1)
+P2 scores A2 Canal Building(Yellow)
+P2 draws A4 Invention(Green) (hand=1)
+P2 scores A4 Invention(Green)
+    = progressed
+[state] SVYBAgEAAhcA4AMeAAAAAAABLwM3OD4IREdFQkZBSUgITU9UUlNLUVAJVlleW11aXFVXCmFiX2hkY2dlYGYABQIAKjUfIwQCMAkBIAICBAIDABUiMgMBQyELBAU6LEwAAAAAAAQABhM2QAUAJAcnMz0GADsbCCU0LQUADQoOKzwFABIMKTE/CxgWFB4ZHRwPFxAoBAECAwQBAAA=
+— P1 action (DogmaAction, turn 23, 2 left)
+Dogma: P1 activates A5 Coal(Red) (featured Factory)
+Effect 1 (share/non-demand) — Factory counts (frozen): P1=5, P2=4; targets: P1
+  → handler CoalTuckHandler on P1
+P1 draws A5 Chemistry(Blue) (hand=1)
+P1 tucks A5 Chemistry(Blue)
+    = progressed
+Effect 2 (share/non-demand) — Factory counts (frozen): P1=5, P2=4; targets: P1
+  → handler CoalSplayHandler on P1
+    = no-op
+Effect 3 (share/non-demand) — Factory counts (frozen): P1=5, P2=4; targets: P1
+  → handler CoalScorePairHandler on P1
+    = no-op (paused awaiting choice)
+  → handler CoalScorePairHandler on P1
+P1 scores from board A5 Coal(Red)
+P1 scores from board A1 Oars(Red)
+    = progressed
+— P1 action (AchieveAction, turn 23, 1 left)
+P1 claims age-5 achievement
+[state] SVYBAgEBAhgAwAMeAAAAAAAAAzc4PghER0VCRkFJSAhNT1RSU0tRUAlWWV5bXVpcVVcKYWJfaGRjZ2VgZgAFAgAqNR8jAgIBIAICBAIEABUiMi8DAUMhCwYFOixMMAkBBQAAAAAEAAYTNkAFACQHJzM9BgA7GwglNC0FAA0KDis8BQASDCkxPwsYFhQeGR0cDxcQKAQBAgMEAQAA
+— P2 action (DrawAction, turn 24, 2 left)
+P2 draws A6 Atomic Theory(Blue) (hand=1)
+— P2 action (DogmaAction, turn 24, 1 left)
+Dogma: P2 activates A2 Currency(Green) (featured Crown)
+Effect 1 (share/non-demand) — Crown counts (frozen): P1=8, P2=2; targets: P1,P2
+  → handler CurrencyHandler on P1
+    = no-op
+  → handler CurrencyHandler on P2
+    = no-op (paused awaiting choice)
+  → handler CurrencyHandler on P2
+P2 returns A6 Atomic Theory(Blue)
+P2 draws A6 Canning(Yellow) (hand=1)
+P2 scores A6 Canning(Yellow)
+    = progressed
+[state] SVYBAgEAAhkAwAMeAAAAAAAAAj43CERHRUJGQUlICE1PVFJTS1FQCVZZXltdWlxVVwphYl9oZGNnZWBmAAUCACo1HyMCAgEgAgIEAgQAFSIyLwMBQyELBgU6LEwwCQEFAAAAAAQABhM2QAUAJAcnMz0GADsbCCU0LQUADQoOKzwFABIMKTE/DBgWFB4ZHRwPFxAoOAQBAgMEAQAA
+— P1 action (DrawAction, turn 25, 2 left)
+P1 draws A7 Evolution(Blue) (hand=1)
+— P1 action (DogmaAction, turn 25, 1 left)
+Dogma: P1 activates A2 Mathematics(Blue) (featured Lightbulb)
+Effect 1 (share/non-demand) — Lightbulb counts (frozen): P1=6, P2=4; targets: P1
+  → handler MathematicsHandler on P1
+    = no-op (paused awaiting choice)
+  → handler MathematicsHandler on P1
+P1 returns A7 Evolution(Blue)
+P1 draws A8 Empiricism(Purple) (hand=1)
+P1 melds A8 Empiricism(Purple)
+    = progressed
+[state] SVYBAgEBAhoAwAMeAAAAAAAAAj43CEdFQkZBSUhEB09UUlNLUVAJVlleW11aXFVXCmFiX2hkY2dlYGYABQIAKjUfIwICASADAk0EAgQAFSIyLwMBQyELBgU6LEwwCQEFAAAAAAQABhM2QAUAJAcnMz0GADsbCCU0LQUADQoOKzwFABIMKTE/DBgWFB4ZHRwPFxAoOAQBAgMEAQAA
+— P2 action (DogmaAction, turn 26, 2 left)
+Dogma: P2 activates A6 Emancipation(Purple) (featured Factory)
+Effect 1 (demand) — Factory counts (frozen): P1=2, P2=4; targets: P1
+  → handler EmancipationDemandHandler on P1
+    = no-op
+Effect 2 (share/non-demand) — Factory counts (frozen): P1=2, P2=4; targets: P2
+  → handler EmancipationSplayHandler on P2
+    = no-op (paused awaiting choice)
+  → handler EmancipationSplayHandler on P2
+P2 splays Purple Right
+    = progressed
+— P2 action (AchieveAction, turn 26, 1 left)
+P2 claims age-6 achievement
