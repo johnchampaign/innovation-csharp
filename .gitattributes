@@ -1,0 +1,13 @@
+# Pin LF in both the index and the working tree, so a checkout on Windows (where
+# core.autocrlf=true rewrites files to CRLF) cannot make the same clone report
+# every file as modified when it is next opened on Linux. That is exactly what
+# happened here: a whole tree of phantom diffs with no content change in any of it.
+#
+# `text=auto` still detects binary content and leaves it untouched. The
+# rules below just make that explicit for the tracked image assets.
+* text=auto eol=lf
+
+*.jpg  binary
+*.jpeg binary
+*.png  binary
+*.ico  binary
