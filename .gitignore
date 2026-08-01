@@ -65,3 +65,7 @@ innovation cards.pdf
 Icons/
 images/
 innovation game snapshot.png
+
+# Play logs are uploaded to the repo by the in-app log uploader. They are
+# build artifacts of play, not source — keep them out of the tree.
+play-logs/
